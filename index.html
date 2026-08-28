@@ -36,7 +36,10 @@
       <div class="flex gap-2">
         <div class="w-1/2">
           <label class="text-xs text-gray-600">Employee ID <span class="text-gray-400">(NIP)</span></label>
-          <input type="text" id="employeeId" placeholder="e.g. 21100306" class="w-full p-2 border rounded text-sm">
+          <!-- 🔥 변경 후 (모바일 숫자 키패드 + 실시간 숫자만 입력 제한) -->
+          <input type="tel" inputmode="numeric" pattern="[0-9]*" id="employeeId" placeholder="e.g. 21100306"
+            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+            class="w-full p-2 border rounded text-sm font-mono">
         </div>
         <div class="w-1/2">
           <label class="text-xs text-gray-600">SOL USER ID</label>

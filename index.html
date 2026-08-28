@@ -12,6 +12,7 @@
 </head>
 <body class="bg-gray-100 p-4 max-w-md mx-auto relative min-h-screen">
 
+  <!-- Fullscreen Loading Progress Modal -->
   <div id="loadingModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl p-6 w-full max-w-xs shadow-2xl text-center space-y-4">
       <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent"></div>
@@ -35,6 +36,7 @@
   <div class="bg-white p-6 rounded-xl shadow-md space-y-4">
     <h2 class="text-xl font-bold text-gray-800 border-b pb-2">SOL QA Proof Upload</h2>
     
+    <!-- Profile Section -->
     <div class="space-y-3 bg-blue-50 p-3 rounded-lg">
       <p class="text-xs font-semibold text-blue-600">👤 User Profile</p>
 
@@ -81,6 +83,7 @@
         </div>
       </div>
 
+      <!-- Case ID Base Section -->
       <div>
         <label class="text-xs font-bold text-indigo-700">Case ID Base * <span class="text-gray-400 font-normal">(Prefix)</span></label>
         <input 
@@ -90,6 +93,7 @@
           oninput="autoFormatCaseIdBase(this)"
           class="w-full p-2 border-2 border-indigo-400 rounded text-sm uppercase font-mono tracking-wide bg-white transition-colors"
         >
+        <!-- 🔥 Case ID 전용 에러 메시지 영역 -->
         <p id="caseIdErrorMsg" class="text-[11px] font-semibold text-red-600 mt-1 hidden"></p>
         
         <p class="text-[10px] text-gray-500 mt-1">
@@ -99,6 +103,7 @@
       </div>
     </div>
 
+    <!-- Dynamic Test Cases Container -->
     <div class="space-y-4">
       <div class="flex justify-between items-center border-b pb-1">
         <h3 class="text-sm font-bold text-gray-700">Test Cases <span class="text-xs text-gray-400">(Max 20)</span></h3>
@@ -110,7 +115,10 @@
       <div id="testCasesContainer" class="space-y-4"></div>
     </div>
 
-    <button id="submitBtn" onclick="handleSubmitAll()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg shadow hover:bg-indigo-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition mt-4">
+    <!-- 🔥 제출 버튼 전용 상단 에러 메시지 (이미지 미첨부 등 안내) -->
+    <p id="globalErrorMsg" class="text-xs font-semibold text-red-600 text-center hidden mt-2"></p>
+
+    <button id="submitBtn" onclick="handleSubmitAll()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg shadow hover:bg-indigo-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition mt-2">
       Submit All Cases <span class="font-normal text-xs">(Kirim Semua)</span>
     </button>
     <p id="statusMsg" class="text-center text-xs mt-2 font-semibold"></p>
@@ -229,33 +237,40 @@
       updateAllFullCaseIds();
     }
 
-    // 🔥 통합 검증 함수 (Case ID Base + 이미지 유무 실시간 체크)
+    // 🔥 에러 영역 분리 적용된 실시간 검증 함수
     function validateFormState() {
       const input = document.getElementById('caseIdBase');
-      const errMsg = document.getElementById('caseIdErrorMsg');
+      const caseIdErr = document.getElementById('caseIdErrorMsg');
+      const globalErr = document.getElementById('globalErrorMsg');
       const submitBtn = document.getElementById('submitBtn');
       const val = input.value.trim();
 
       const baseRegex = /^[A-Z0-9]{2}_[A-Z0-9]{2}_[A-Z0-9]{3}_[A-Z0-9]{2}$/;
 
-      // 1. Case ID Base 검증
+      // 초기화
+      caseIdErr.classList.add('hidden');
+      globalErr.classList.add('hidden');
+
+      // 1. Case ID Base 포맷 검증 (Case ID Base 입력창 직하단 노출)
       if (!val) {
-        errMsg.innerText = "⚠️ Case ID Base is required. (e.g. ID_IQ_300_01)";
-        errMsg.classList.remove('hidden');
+        caseIdErr.innerText = "⚠️ Case ID Base is required. (e.g. ID_IQ_300_01)";
+        caseIdErr.classList.remove('hidden');
         input.className = "w-full p-2 border-2 border-red-500 rounded text-sm uppercase font-mono tracking-wide bg-white";
         submitBtn.disabled = true;
         return false;
       }
 
       if (!baseRegex.test(val)) {
-        errMsg.innerText = "⚠️ Invalid Case ID format! Required e.g. ID_IQ_300_01\n(Format belum lengkap/sesuai. Contoh: ID_IQ_300_01)";
-        errMsg.classList.remove('hidden');
+        caseIdErr.innerText = "⚠️ Invalid Case ID format! Required e.g. ID_IQ_300_01\n(Format belum lengkap/sesuai. Contoh: ID_IQ_300_01)";
+        caseIdErr.classList.remove('hidden');
         input.className = "w-full p-2 border-2 border-red-500 rounded text-sm uppercase font-mono tracking-wide bg-white";
         submitBtn.disabled = true;
         return false;
       }
 
-      // 2. 모든 TC 카드별 최소 1장 이상의 이미지 파일 유무 검증
+      input.className = "w-full p-2 border-2 border-green-500 rounded text-sm uppercase font-mono tracking-wide bg-white";
+
+      // 2. 모든 TC 카드별 최소 1장 이상 이미지 검증 (제출 버튼 직상단 노출)
       const cards = document.querySelectorAll('.tc-card');
       let missingImageTcIndex = null;
 
@@ -269,16 +284,13 @@
       }
 
       if (missingImageTcIndex !== null) {
-        errMsg.innerText = `⚠️ Case #${missingImageTcIndex} requires at least 1 image. (Mohon unggah gambar bukti.)`;
-        errMsg.classList.remove('hidden');
-        input.className = "w-full p-2 border-2 border-amber-500 rounded text-sm uppercase font-mono tracking-wide bg-white";
+        globalErr.innerText = `⚠️ Case #${missingImageTcIndex} requires at least 1 proof image.`;
+        globalErr.classList.remove('hidden');
         submitBtn.disabled = true;
         return false;
       }
 
-      // 유효성 통과
-      errMsg.classList.add('hidden');
-      input.className = "w-full p-2 border-2 border-green-500 rounded text-sm uppercase font-mono tracking-wide bg-white";
+      // 유효성 전체 통과
       submitBtn.disabled = false;
       return true;
     }

@@ -54,7 +54,7 @@
         </div>
       </div>
 
-      <!-- Department (선택 즉시 닫힘 처리) -->
+      <!-- Department -->
       <div>
         <label class="text-xs text-gray-600">Department <span class="text-gray-400">(Departemen)</span></label>
         <select id="department" onchange="this.blur()" class="w-full p-2 border rounded text-sm bg-white">
@@ -111,7 +111,6 @@
             <button type="button" onclick="clearInput('caseIdBase')" class="clear-btn absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-xs hidden">✕</button>
           </div>
         </div>
-        <!-- Start TC (선택 즉시 닫힘 처리) -->
         <div class="w-1/4">
           <label class="text-xs font-bold text-indigo-700">Start TC</label>
           <select id="startTcSelect" onchange="updateAllFullCaseIds(); this.blur();" class="w-full p-2 border-2 border-indigo-400 rounded text-sm bg-white font-mono font-bold text-indigo-800 mt-0.5">
@@ -180,14 +179,20 @@
       }
     }
 
-    function clearInput(inputId) {
-      const input = document.getElementById(inputId);
+    function clearInput(inputIdOrElem) {
+      let input;
+      if (typeof inputIdOrElem === 'string') {
+        input = document.getElementById(inputIdOrElem);
+      } else {
+        input = inputIdOrElem;
+      }
+
       if (input) {
         input.value = "";
         toggleClearBtn(input);
         input.focus();
 
-        if (inputId === 'caseIdBase') {
+        if (input.id === 'caseIdBase') {
           autoFormatCaseIdBase(input);
         } else {
           validateFormState();
@@ -242,7 +247,6 @@
       renderSavedProfileChips();
     }
 
-    // 🔥 터치 영역 확대 & 삭제 Confirm 보완된 프로필 칩 렌더링
     function renderSavedProfileChips() {
       const profiles = getSavedProfiles();
       const container = document.getElementById('profileChips');
@@ -400,6 +404,7 @@
       const baseVal = document.getElementById('caseIdBase').value.trim().toUpperCase();
       const fullCaseId = baseVal ? `${baseVal}_${tcSuffix}` : tcSuffix;
 
+      <!-- 🔥 Situation, Expected Result에도 X자 버튼 적용 -->
       const cardHtml = `
         <div class="tc-card border rounded-lg p-3 bg-gray-50 space-y-3 relative" data-tc-id="${currentTcId}">
           <div class="flex justify-between items-center border-b pb-1">
@@ -416,7 +421,6 @@
             <input type="text" class="full-case-id w-full p-2 border rounded text-sm bg-gray-200 font-mono font-bold text-indigo-800" value="${fullCaseId}" readonly>
           </div>
 
-          <!-- Test Result (선택 즉시 닫힘 처리) -->
           <div>
             <label class="text-xs font-bold text-gray-700">Test Result</label>
             <select class="tc-result w-full p-2 border rounded text-sm bg-white" onchange="toggleCondField(this); this.blur();">
@@ -429,11 +433,17 @@
           <div class="cond-fields space-y-2 hidden border-l-4 border-amber-400 pl-2 bg-amber-50 p-2 rounded-r">
             <div>
               <label class="text-xs font-bold text-amber-800">Situation * <span class="text-amber-600 font-normal">(Situasi)</span></label>
-              <textarea class="tc-situation w-full p-1.5 border rounded text-xs" rows="2" placeholder="Describe the problem..." oninput="validateFormState()"></textarea>
+              <div class="relative mt-0.5">
+                <textarea class="tc-situation w-full p-1.5 pr-6 border rounded text-xs bg-white" rows="2" placeholder="Describe the problem..." oninput="toggleClearBtn(this); validateFormState();"></textarea>
+                <button type="button" onclick="clearInput(this.previousElementSibling)" class="clear-btn absolute right-2 top-2 text-gray-400 hover:text-gray-600 font-bold text-xs hidden">✕</button>
+              </div>
             </div>
             <div>
               <label class="text-xs font-bold text-amber-800">Expected Result * <span class="text-amber-600 font-normal">(Hasil Diharapkan)</span></label>
-              <textarea class="tc-expected w-full p-1.5 border rounded text-xs" rows="2" placeholder="Describe expected behavior..." oninput="validateFormState()"></textarea>
+              <div class="relative mt-0.5">
+                <textarea class="tc-expected w-full p-1.5 pr-6 border rounded text-xs bg-white" rows="2" placeholder="Describe expected behavior..." oninput="toggleClearBtn(this); validateFormState();"></textarea>
+                <button type="button" onclick="clearInput(this.previousElementSibling)" class="clear-btn absolute right-2 top-2 text-gray-400 hover:text-gray-600 font-bold text-xs hidden">✕</button>
+              </div>
             </div>
           </div>
 
@@ -568,8 +578,12 @@
         condDiv.classList.remove('hidden');
       } else {
         condDiv.classList.add('hidden');
-        condDiv.querySelector('.tc-situation').value = '';
-        condDiv.querySelector('.tc-expected').value = '';
+        const sitArea = condDiv.querySelector('.tc-situation');
+        const expArea = condDiv.querySelector('.tc-expected');
+        sitArea.value = '';
+        expArea.value = '';
+        toggleClearBtn(sitArea);
+        toggleClearBtn(expArea);
       }
       validateFormState();
     }

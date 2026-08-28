@@ -139,7 +139,7 @@
       </div>
     </div>
 
-    <!-- Dynamic Test Cases Container (상단 버튼 삭제됨) -->
+    <!-- Dynamic Test Cases Container -->
     <div class="space-y-4">
       <div class="border-b pb-1">
         <h3 class="text-sm font-bold text-gray-700">Test Cases <span class="text-xs text-gray-400">(Max 20)</span></h3>
@@ -491,11 +491,12 @@
       reindexTestCases();
       validateFormState();
 
-      // 🔥 버튼 클릭 시 '➕ Add Another Case' 버튼이 화면 맨 아래에 위치하도록 스크롤 이동
-      // 덕분에 연속 클릭 시 손가락/마우스 위치를 옮기지 않고 계속 누를 수 있습니다.
-      const bottomAddBtn = document.getElementById('bottomAddBtn');
-      if (bottomAddBtn && currentCards.length > 1) {
-        bottomAddBtn.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      // 🔥 화면 전체를 가장 자연스럽게 맨 밑으로 스크롤 이동
+      if (currentCards.length > 1) {
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: 'smooth'
+        });
       }
     }
 

@@ -96,7 +96,7 @@
         </div>
       </div>
 
-      <!-- Case ID Base & Start TC Section -->
+      <!-- Case ID Base & Start TC Section (maxlength 15 적용) -->
       <div class="flex gap-2">
         <div class="w-3/4">
           <label class="text-xs font-bold text-indigo-700">Case ID Base * <span class="text-gray-400 font-normal">(Prefix)</span></label>
@@ -104,6 +104,7 @@
             <input 
               type="text" 
               id="caseIdBase" 
+              maxlength="15"
               placeholder="e.g. ID_IQ_300_01" 
               oninput="autoFormatCaseIdBase(this); toggleClearBtn(this);"
               class="w-full p-2 pr-7 border-2 border-indigo-400 rounded text-sm uppercase font-mono tracking-wide bg-white transition-colors"
@@ -120,10 +121,21 @@
       
       <p id="caseIdErrorMsg" class="text-[11px] font-semibold text-red-600 mt-1 hidden"></p>
       
-      <p class="text-[10px] text-gray-500 mt-1">
-        * Enter letters & numbers only. Underscores (_) are added automatically.<br>
-        <span class="text-gray-400">(Ketik huruf & angka saja. Garis bawah (_) akan ditambahkan otomatis.)</span>
-      </p>
+      <div class="bg-indigo-100/70 p-2 rounded-md mt-1.5 border border-indigo-200">
+        <p class="text-[11px] font-semibold text-indigo-900 leading-tight">
+          💡 Type letters & numbers ONLY — Underscores (_) are added AUTOMATICALLY!
+        </p>
+        <p class="text-[10px] text-indigo-700 mt-0.5">
+          (e.g. Type <span class="font-mono font-bold text-indigo-900">IDIQ30001</span> ➔ Auto formatted to <span class="font-mono font-bold text-indigo-900">ID_IQ_300_01</span>)
+        </p>
+        <div class="border-t border-indigo-200 my-1"></div>
+        <p class="text-[11px] font-semibold text-indigo-900 leading-tight">
+          💡 Ketik huruf & angka SAJA — Garis bawah (_) otomatis terisi!
+        </p>
+        <p class="text-[10px] text-indigo-700 mt-0.5">
+          (Contoh: Ketik <span class="font-mono font-bold text-indigo-900">IDIQ30001</span> ➔ Otomatis jadi <span class="font-mono font-bold text-indigo-900">ID_IQ_300_01</span>)
+        </p>
+      </div>
     </div>
 
     <!-- Dynamic Test Cases Container -->
@@ -308,6 +320,7 @@
       }
     }
 
+    // 🔥 길이 제한(15자 자르기)이 적용된 Case ID Base 자동 생성 함수
     function autoFormatCaseIdBase(input) {
       let raw = input.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
       let formatted = "";
@@ -318,7 +331,8 @@
       if (raw.length > 7) formatted += "_" + raw.substring(7, 9);
       if (raw.length > 9) formatted += "_" + raw.substring(9);
 
-      input.value = formatted;
+      // 최대 15자(ID_IQ_300_01 길이)로 자르기
+      input.value = formatted.substring(0, 15);
       validateFormState();
       updateAllFullCaseIds();
     }
@@ -446,7 +460,6 @@
             </div>
           </div>
 
-          <!-- 🔥 이미지 전용 업로드 안내 라벨 및 제한 적용 -->
           <div>
             <div class="flex justify-between items-baseline">
               <label class="text-xs font-bold text-gray-700">Proof Images Only *</label>
@@ -456,7 +469,6 @@
             <div class="mt-1">
               <label class="inline-flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 text-indigo-700 px-3 py-2 rounded-lg text-xs font-bold cursor-pointer hover:bg-indigo-100 active:scale-95 transition">
                 <span>📷 + Attach Screenshots / Images <span class="font-normal text-[10px]">(Hanya Gambar)</span></span>
-                <!-- accept 속성에 이미지 확장자 명시 -->
                 <input 
                   type="file" 
                   multiple 
@@ -509,7 +521,6 @@
       const newFiles = Array.from(e.target.files);
       if (newFiles.length === 0) return;
 
-      // 동적 파일 검증 (이미지가 아닌 파일 차단)
       const nonImageFiles = newFiles.filter(f => !f.type.startsWith('image/'));
       if (nonImageFiles.length > 0) {
         alert("⚠️ Only image files (PNG, JPG) are allowed. Videos cannot be uploaded.\n(Hanya 파일 이미지만 허용됩니다. 동영상은 업로드 불가합니다.)");

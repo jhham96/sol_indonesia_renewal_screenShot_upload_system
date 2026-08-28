@@ -96,15 +96,12 @@
         </div>
       </div>
 
-      <!-- Scenario ID & Start TC Section (안내 힌트 박스를 입력창 위로 이동) -->
+      <!-- Scenario ID Section (단독 전체 너비 배치) -->
       <div>
-        <div class="flex justify-between items-baseline mb-1">
-          <label class="text-xs font-bold text-indigo-700">Scenario ID * <span class="text-gray-400 font-normal">(Prefix)</span></label>
-          <span class="text-xs font-bold text-indigo-700">Start TC</span>
-        </div>
-
-        <!-- 🔥 입력 전 반드시 보도록 위로 끌어올린 힌트 안내 박스 -->
-        <div class="bg-indigo-100/80 p-2 rounded-md mb-2 border border-indigo-200 shadow-sm">
+        <label class="text-xs font-bold text-indigo-700">Scenario ID * <span class="text-gray-400 font-normal">(Prefix)</span></label>
+        
+        <!-- 입력 전 꼭 읽는 힌트 박스 -->
+        <div class="bg-indigo-100/80 p-2 rounded-md my-1.5 border border-indigo-200 shadow-sm">
           <p class="text-[11px] font-bold text-indigo-900 leading-tight">
             💡 Type letters & numbers ONLY — Underscores (_) are added AUTOMATICALLY!
           </p>
@@ -120,27 +117,26 @@
           </p>
         </div>
 
-        <div class="flex gap-2">
-          <div class="w-3/4">
-            <div class="relative">
-              <input 
-                type="text" 
-                id="caseIdBase" 
-                maxlength="12"
-                placeholder="e.g. ID_IQ_300_01" 
-                oninput="autoFormatCaseIdBase(this); toggleClearBtn(this);"
-                class="w-full p-2 pr-7 border-2 border-indigo-400 rounded text-sm uppercase font-mono tracking-wide bg-white transition-colors"
-              >
-              <button type="button" onclick="clearInput('caseIdBase')" class="clear-btn absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-xs hidden">✕</button>
-            </div>
-          </div>
-          <div class="w-1/4">
-            <select id="startTcSelect" onchange="updateAllFullCaseIds(); this.blur();" class="w-full p-2 border-2 border-indigo-400 rounded text-sm bg-white font-mono font-bold text-indigo-800">
-            </select>
-          </div>
+        <div class="relative">
+          <input 
+            type="text" 
+            id="caseIdBase" 
+            maxlength="12"
+            placeholder="e.g. ID_IQ_300_01" 
+            oninput="autoFormatCaseIdBase(this); toggleClearBtn(this);"
+            class="w-full p-2 pr-7 border-2 border-indigo-400 rounded text-sm uppercase font-mono tracking-wide bg-white transition-colors"
+          >
+          <button type="button" onclick="clearInput('caseIdBase')" class="clear-btn absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-xs hidden">✕</button>
         </div>
         
         <p id="caseIdErrorMsg" class="text-[11px] font-semibold text-red-600 mt-1 hidden"></p>
+      </div>
+
+      <!-- Start TC Section (완전히 독립된 하단 행으로 분리) -->
+      <div>
+        <label class="text-xs font-bold text-indigo-700">Start TC <span class="text-gray-400 font-normal">(Nomor Uji Awal)</span></label>
+        <select id="startTcSelect" onchange="updateAllFullCaseIds(); this.blur();" class="w-full mt-0.5 p-2 border-2 border-indigo-400 rounded text-sm bg-white font-mono font-bold text-indigo-800">
+        </select>
       </div>
     </div>
 

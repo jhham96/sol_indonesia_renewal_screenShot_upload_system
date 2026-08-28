@@ -5,27 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QA Proof Uploader</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 환경변수 설정 파일 로드 -->
   <script src="./config.js"></script>
 </head>
 <body class="bg-gray-100 p-4 max-w-md mx-auto">
   <div class="bg-white p-6 rounded-xl shadow-md space-y-4">
     <h2 class="text-xl font-bold text-gray-800 border-b pb-2">SOL QA Proof Upload</h2>
     
+    <!-- Profile Section -->
     <div class="space-y-3 bg-blue-50 p-3 rounded-lg">
-      <p class="text-xs font-semibold text-blue-600">👤 User Profile <span class="text-gray-500 font-normal">(Multi-user Profile)</span></p>
+      <p class="text-xs font-semibold text-blue-600">👤 User Profile</p>
 
-      <div>
-        <label class="text-xs text-gray-600 font-bold">Select Tester Name <span class="text-gray-400 font-normal">(Pilih Nama Tester)</span></label>
-        <div class="flex gap-2 mt-1">
-          <select id="testerSelect" onchange="switchUserProfile()" class="w-full p-2 border rounded text-sm bg-white font-bold text-indigo-700">
-            </select>
-          <button type="button" onclick="addNewTester()" class="bg-indigo-600 text-white text-xs font-bold px-3 py-2 rounded shrink-0 hover:bg-indigo-700 transition">
-            + New
-          </button>
+      <!-- 🔥 자동 생성되는 즐겨찾기 칩 목록 영역 -->
+      <div id="savedProfilesSection" class="hidden">
+        <label class="text-[11px] font-bold text-gray-500">Quick Switch (Saved Profiles):</label>
+        <div id="profileChips" class="flex flex-wrap gap-1.5 mt-1">
+          <!-- Dynamic Chips injected here -->
         </div>
       </div>
 
-      <hr class="border-blue-200 my-2">
+      <!-- Tester Name 입력란 -->
+      <div>
+        <label class="text-xs text-gray-600 font-bold">Tester Name * <span class="text-gray-400 font-normal">(Nama Tester)</span></label>
+        <input type="text" id="testerName" placeholder="e.g. Alex" class="w-full p-2 border rounded text-sm bg-white font-bold text-indigo-800 mt-0.5">
+      </div>
 
       <div>
         <label class="text-xs text-gray-600">Department <span class="text-gray-400">(Departemen)</span></label>
@@ -60,6 +63,7 @@
         </div>
       </div>
 
+      <!-- Case ID Base Section -->
       <div>
         <label class="text-xs font-bold text-indigo-700">Case ID Base * <span class="text-gray-400 font-normal">(Prefix)</span></label>
         <input 
@@ -78,6 +82,7 @@
       </div>
     </div>
 
+    <!-- Dynamic Test Cases Container -->
     <div class="space-y-4">
       <div class="flex justify-between items-center border-b pb-1">
         <h3 class="text-sm font-bold text-gray-700">Test Cases <span class="text-xs text-gray-400">(Max 20)</span></h3>
@@ -87,7 +92,8 @@
       </div>
 
       <div id="testCasesContainer" class="space-y-4">
-        </div>
+        <!-- Dynamic TC Items -->
+      </div>
     </div>
 
     <button id="submitBtn" onclick="handleSubmitAll()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg shadow hover:bg-indigo-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition mt-4">
@@ -102,123 +108,105 @@
     let tcCount = 0;
     const MAX_TC = 20;
 
-    // 🔥 멀티유저 LocalStorage 구조체
-    // Storage Key: 'qa_multi_profiles' -> { 'Jihun': { dept, empId, solId, caseBase }, 'Tester2': { ... } }
-    // Storage Key: 'qa_last_active_user' -> 'Jihun'
-
     window.onload = () => {
-      initUserProfiles();
+      renderSavedProfileChips();
+      
+      // 마지막 활성 프로필 복원
+      const last = JSON.parse(localStorage.getItem('qa_last_active_profile') || '{}');
+      if (last.name) {
+        applyProfileToForm(last);
+      } else {
+        validateCaseIdBase();
+      }
+      
       addTestCase();
     };
 
-    // 1. 유저 프로필 목록 초기화 및 복원
-    function initUserProfiles() {
-      const profiles = getProfilesFromStorage();
-      let lastUser = localStorage.getItem('qa_last_active_user');
-
-      // 등록된 유저가 없을 경우 기본값 생성
-      if (Object.keys(profiles).length === 0) {
-        profiles['Default User'] = { dept: 'E-banking', empId: '', solId: '', caseBase: '' };
-        saveProfilesToStorage(profiles);
-        lastUser = 'Default User';
-      }
-
-      if (!lastUser || !profiles[lastUser]) {
-        lastUser = Object.keys(profiles)[0];
-      }
-
-      renderTesterDropdown(profiles, lastUser);
-      loadUserProfile(lastUser);
-    }
-
-    function getProfilesFromStorage() {
+    // 🔥 LocalStorage 즐겨찾기 프로필 관리
+    function getSavedProfiles() {
       try {
-        return JSON.parse(localStorage.getItem('qa_multi_profiles')) || {};
+        return JSON.parse(localStorage.getItem('qa_quick_profiles')) || [];
       } catch (e) {
-        return {};
+        return [];
       }
     }
 
-    function saveProfilesToStorage(profiles) {
-      localStorage.setItem('qa_multi_profiles', JSON.stringify(profiles));
+    function saveCurrentProfileToQuickList() {
+      const name = document.getElementById('testerName').value.trim();
+      if (!name) return;
+
+      const profile = {
+        name: name,
+        dept: document.getElementById('department').value,
+        empId: document.getElementById('employeeId').value,
+        solId: document.getElementById('solUserId').value,
+        caseBase: document.getElementById('caseIdBase').value
+      };
+
+      let profiles = getSavedProfiles();
+      // 기존 동일 이름 프로필 업데이트 또는 추가
+      const idx = profiles.findIndex(p => p.name.toLowerCase() === name.toLowerCase());
+      if (idx >= 0) {
+        profiles[idx] = profile;
+      } else {
+        profiles.unshift(profile);
+      }
+
+      localStorage.setItem('qa_quick_profiles', JSON.stringify(profiles));
+      localStorage.setItem('qa_last_active_profile', JSON.stringify(profile));
+      renderSavedProfileChips();
     }
 
-    function renderTesterDropdown(profiles, activeUser) {
-      const select = document.getElementById('testerSelect');
-      select.innerHTML = "";
-      
-      Object.keys(profiles).forEach(name => {
-        const option = document.createElement('option');
-        option.value = name;
-        option.innerText = name;
-        if (name === activeUser) option.selected = true;
-        select.appendChild(option);
+    function renderSavedProfileChips() {
+      const profiles = getSavedProfiles();
+      const container = document.getElementById('profileChips');
+      const section = document.getElementById('savedProfilesSection');
+
+      if (profiles.length === 0) {
+        section.classList.add('hidden');
+        return;
+      }
+
+      section.classList.remove('hidden');
+      container.innerHTML = "";
+
+      profiles.forEach((p, idx) => {
+        const chip = document.createElement('div');
+        chip.className = "inline-flex items-center gap-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-800 text-xs font-semibold px-2.5 py-1 rounded-full cursor-pointer transition";
+        chip.innerHTML = `
+          <span onclick="selectProfileChip(${idx})">👤 ${p.name}</span>
+          <button onclick="deleteProfileChip(event, ${idx})" class="text-indigo-400 hover:text-red-500 font-bold ml-1">✕</button>
+        `;
+        container.appendChild(chip);
       });
     }
 
-    // 2. 신규 테스터 추가
-    function addNewTester() {
-      const name = prompt("Enter new Tester Name (e.g. Alex, Budi):\n(Masukkan nama tester baru:)");
-      if (!name || !name.trim()) return;
-
-      const cleanName = name.trim();
-      const profiles = getProfilesFromStorage();
-
-      if (profiles[cleanName]) {
-        alert("Tester name already exists! Switched to existing profile.");
-      } else {
-        profiles[cleanName] = { dept: 'E-banking', empId: '', solId: '', caseBase: '' };
-        saveProfilesToStorage(profiles);
+    function selectProfileChip(idx) {
+      const profiles = getSavedProfiles();
+      if (profiles[idx]) {
+        applyProfileToForm(profiles[idx]);
+        localStorage.setItem('qa_last_active_profile', JSON.stringify(profiles[idx]));
       }
-
-      localStorage.setItem('qa_last_active_user', cleanName);
-      renderTesterDropdown(profiles, cleanName);
-      loadUserProfile(cleanName);
     }
 
-    // 3. 선택된 테스터 프로필 가져오기
-    function loadUserProfile(userName) {
-      const profiles = getProfilesFromStorage();
-      const userObj = profiles[userName] || { dept: 'E-banking', empId: '', solId: '', caseBase: '' };
-
-      document.getElementById('department').value = userObj.dept || 'E-banking';
-      document.getElementById('employeeId').value = userObj.empId || '';
-      document.getElementById('solUserId').value = userObj.solId || '';
+    function applyProfileToForm(p) {
+      document.getElementById('testerName').value = p.name || '';
+      document.getElementById('department').value = p.dept || 'E-banking';
+      document.getElementById('employeeId').value = p.empId || '';
+      document.getElementById('solUserId').value = p.solId || '';
       
       const caseBaseInput = document.getElementById('caseIdBase');
-      caseBaseInput.value = userObj.caseBase || '';
-      
+      caseBaseInput.value = p.caseBase || '';
       autoFormatCaseIdBase(caseBaseInput);
-      localStorage.setItem('qa_last_active_user', userName);
     }
 
-    // 4. 드롭다운 변경 시 유저 스위칭
-    function switchUserProfile() {
-      const selectedUser = document.getElementById('testerSelect').value;
-      loadUserProfile(selectedUser);
+    function deleteProfileChip(e, idx) {
+      e.stopPropagation();
+      let profiles = getSavedProfiles();
+      profiles.splice(idx, 1);
+      localStorage.setItem('qa_quick_profiles', JSON.stringify(profiles));
+      renderSavedProfileChips();
     }
-
-    // 5. 프로필 입력값 변경 시 실시간 자동 저장
-    ['department', 'employeeId', 'solUserId', 'caseIdBase'].forEach(id => {
-      document.getElementById(id).addEventListener('input', () => {
-        const currentUser = document.getElementById('testerSelect').value;
-        if (!currentUser) return;
-
-        const profiles = getProfilesFromStorage();
-        if (!profiles[currentUser]) profiles[currentUser] = {};
-
-        profiles[currentUser].dept = document.getElementById('department').value;
-        profiles[currentUser].empId = document.getElementById('employeeId').value;
-        profiles[currentUser].solId = document.getElementById('solUserId').value;
-        profiles[currentUser].caseBase = document.getElementById('caseIdBase').value;
-
-        saveProfilesToStorage(profiles);
-
-        if (id === 'caseIdBase') {
-          updateAllFullCaseIds();
-        }
-      });
-    });
 
     // 복붙 및 언더바 기입 호환 자동 마스킹
     function autoFormatCaseIdBase(input) {
@@ -373,6 +361,13 @@
     }
 
     async function handleSubmitAll() {
+      const testerName = document.getElementById('testerName').value.trim();
+      if (!testerName) {
+        alert("Please enter Tester Name.\n(Mohon isi Nama Tester.)");
+        document.getElementById('testerName').focus();
+        return;
+      }
+
       if (!validateCaseIdBase()) return;
 
       const caseBase = document.getElementById('caseIdBase').value.trim().toUpperCase();
@@ -438,6 +433,9 @@
             body: JSON.stringify(payload)
           });
         }
+
+        // 🔥 제출 성공 시 현재 입력 정보를 즐겨찾기 칩에 자동 추가/업데이트
+        saveCurrentProfileToQuickList();
 
         statusMsg.className = "text-center text-xs mt-2 font-semibold text-green-600";
         statusMsg.innerText = `✅ All ${cards.length} cases submitted successfully!`;

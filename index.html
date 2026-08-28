@@ -45,9 +45,13 @@
         <div id="profileChips" class="flex flex-wrap gap-1.5 mt-1"></div>
       </div>
 
+      <!-- Tester Name (X 버튼 적용) -->
       <div>
         <label class="text-xs text-gray-600 font-bold">Tester Name * <span class="text-gray-400 font-normal">(Nama Tester)</span></label>
-        <input type="text" id="testerName" placeholder="e.g. Alex" class="w-full p-2 border rounded text-sm bg-white font-bold text-indigo-800 mt-0.5">
+        <div class="relative mt-0.5">
+          <input type="text" id="testerName" placeholder="e.g. Alex" oninput="toggleClearBtn(this)" class="w-full p-2 pr-7 border rounded text-sm bg-white font-bold text-indigo-800">
+          <button type="button" onclick="clearInput('testerName')" class="clear-btn absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-xs hidden">✕</button>
+        </div>
       </div>
 
       <div>
@@ -65,39 +69,50 @@
       </div>
 
       <div class="flex gap-2">
+        <!-- Employee ID (X 버튼 적용) -->
         <div class="w-1/2">
           <label class="text-xs text-gray-600">Employee ID <span class="text-gray-400">(NIP)</span></label>
-          <input 
-            type="tel" 
-            inputmode="numeric" 
-            pattern="[0-9]*" 
-            id="employeeId" 
-            placeholder="e.g. 21100306" 
-            oninput="this.value = this.value.replace(/[^0-9]/g, '')" 
-            class="w-full p-2 border rounded text-sm font-mono"
-          >
+          <div class="relative mt-0.5">
+            <input 
+              type="tel" 
+              inputmode="numeric" 
+              pattern="[0-9]*" 
+              id="employeeId" 
+              placeholder="e.g. 21100306" 
+              oninput="this.value = this.value.replace(/[^0-9]/g, ''); toggleClearBtn(this);" 
+              class="w-full p-2 pr-7 border rounded text-sm font-mono"
+            >
+            <button type="button" onclick="clearInput('employeeId')" class="clear-btn absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-xs hidden">✕</button>
+          </div>
         </div>
+        <!-- SOL USER ID (X 버튼 적용) -->
         <div class="w-1/2">
           <label class="text-xs text-gray-600">SOL USER ID</label>
-          <input type="text" id="solUserId" placeholder="e.g. IDSOLTEST103" class="w-full p-2 border rounded text-sm">
+          <div class="relative mt-0.5">
+            <input type="text" id="solUserId" placeholder="e.g. IDSOLTEST103" oninput="toggleClearBtn(this)" class="w-full p-2 pr-7 border rounded text-sm">
+            <button type="button" onclick="clearInput('solUserId')" class="clear-btn absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-xs hidden">✕</button>
+          </div>
         </div>
       </div>
 
-      <!-- Case ID Base & Start TC Section -->
+      <!-- Case ID Base & Start TC Section (X 버튼 적용) -->
       <div class="flex gap-2">
         <div class="w-3/4">
           <label class="text-xs font-bold text-indigo-700">Case ID Base * <span class="text-gray-400 font-normal">(Prefix)</span></label>
-          <input 
-            type="text" 
-            id="caseIdBase" 
-            placeholder="e.g. ID_IQ_300_01" 
-            oninput="autoFormatCaseIdBase(this)"
-            class="w-full p-2 border-2 border-indigo-400 rounded text-sm uppercase font-mono tracking-wide bg-white transition-colors"
-          >
+          <div class="relative mt-0.5">
+            <input 
+              type="text" 
+              id="caseIdBase" 
+              placeholder="e.g. ID_IQ_300_01" 
+              oninput="autoFormatCaseIdBase(this); toggleClearBtn(this);"
+              class="w-full p-2 pr-7 border-2 border-indigo-400 rounded text-sm uppercase font-mono tracking-wide bg-white transition-colors"
+            >
+            <button type="button" onclick="clearInput('caseIdBase')" class="clear-btn absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-xs hidden">✕</button>
+          </div>
         </div>
         <div class="w-1/4">
           <label class="text-xs font-bold text-indigo-700">Start TC</label>
-          <select id="startTcSelect" onchange="updateAllFullCaseIds()" class="w-full p-2 border-2 border-indigo-400 rounded text-sm bg-white font-mono font-bold text-indigo-800">
+          <select id="startTcSelect" onchange="updateAllFullCaseIds()" class="w-full p-2 border-2 border-indigo-400 rounded text-sm bg-white font-mono font-bold text-indigo-800 mt-0.5">
           </select>
         </div>
       </div>
@@ -149,7 +164,42 @@
       }
       
       addTestCase();
+      checkInitialClearBtns();
     };
+
+    // 🔥 입력창 X 버튼 토글 및 비우기 기능
+    function toggleClearBtn(input) {
+      const clearBtn = input.parentElement.querySelector('.clear-btn');
+      if (clearBtn) {
+        if (input.value.length > 0) {
+          clearBtn.classList.remove('hidden');
+        } else {
+          clearBtn.classList.add('hidden');
+        }
+      }
+    }
+
+    function clearInput(inputId) {
+      const input = document.getElementById(inputId);
+      if (input) {
+        input.value = "";
+        toggleClearBtn(input);
+        input.focus();
+
+        if (inputId === 'caseIdBase') {
+          autoFormatCaseIdBase(input);
+        } else {
+          validateFormState();
+        }
+      }
+    }
+
+    function checkInitialClearBtns() {
+      ['testerName', 'employeeId', 'solUserId', 'caseIdBase'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) toggleClearBtn(input);
+      });
+    }
 
     function initStartTcOptions() {
       const select = document.getElementById('startTcSelect');
@@ -232,7 +282,9 @@
       
       const caseBaseInput = document.getElementById('caseIdBase');
       caseBaseInput.value = p.caseBase || '';
+      
       autoFormatCaseIdBase(caseBaseInput);
+      checkInitialClearBtns();
     }
 
     function deleteProfileChip(e, idx) {
@@ -273,7 +325,7 @@
       if (!val) {
         caseIdErr.innerText = "⚠️ Case ID Base is required. (e.g. ID_IQ_300_01)";
         caseIdErr.classList.remove('hidden');
-        input.className = "w-full p-2 border-2 border-red-500 rounded text-sm uppercase font-mono tracking-wide bg-white";
+        input.className = "w-full p-2 pr-7 border-2 border-red-500 rounded text-sm uppercase font-mono tracking-wide bg-white";
         submitBtn.disabled = true;
         return false;
       }
@@ -281,12 +333,12 @@
       if (!baseRegex.test(val)) {
         caseIdErr.innerText = "⚠️ Invalid Case ID format! Required e.g. ID_IQ_300_01\n(Format belum lengkap/sesuai. Contoh: ID_IQ_300_01)";
         caseIdErr.classList.remove('hidden');
-        input.className = "w-full p-2 border-2 border-red-500 rounded text-sm uppercase font-mono tracking-wide bg-white";
+        input.className = "w-full p-2 pr-7 border-2 border-red-500 rounded text-sm uppercase font-mono tracking-wide bg-white";
         submitBtn.disabled = true;
         return false;
       }
 
-      input.className = "w-full p-2 border-2 border-green-500 rounded text-sm uppercase font-mono tracking-wide bg-white";
+      input.className = "w-full p-2 pr-7 border-2 border-green-500 rounded text-sm uppercase font-mono tracking-wide bg-white";
 
       const cards = document.querySelectorAll('.tc-card');
 
@@ -589,8 +641,6 @@
             const file = files[fIdx];
             const fileData = await fileToBase64(file);
             const ext = file.name.substring(file.name.lastIndexOf("."));
-            
-            // 🔥 파일명에 Employee ID 추가된 부분
             const targetFileName = `${fullCaseId}_${empId}_${fIdx + 1}${ext}`;
 
             preparedFiles.push({

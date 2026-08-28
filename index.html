@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QA Proof Uploader</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="./config.js"></script>
 </head>
 <body class="bg-gray-100 p-4 max-w-md mx-auto">
   <div class="bg-white p-6 rounded-xl shadow-md space-y-4">
     <h2 class="text-xl font-bold text-gray-800 border-b pb-2">SOL QA Proof Upload</h2>
     
-    <!-- Profile Section (Auto-saved) -->
     <div class="space-y-3 bg-blue-50 p-3 rounded-lg">
       <p class="text-xs font-semibold text-blue-600">👤 User Profile <span class="text-gray-500 font-normal">(Auto-saved / Disimpan otomatis)</span></p>
       
@@ -39,21 +39,22 @@
         </div>
       </div>
 
-      <!-- 🔥 Case ID Base (고정 저장 영역) -->
       <div>
         <label class="text-xs font-bold text-indigo-700">Case ID Base * <span class="text-gray-400 font-normal">(Prefix)</span></label>
         <input 
           type="text" 
           id="caseIdBase" 
-          placeholder="e.g. ID_IQ_300_01" 
-          oninput="sanitizeCaseIdBase(this)"
+          placeholder="e.g. Type IDIQ30001" 
+          oninput="autoFormatCaseIdBase(this)"
           class="w-full p-2 border-2 border-indigo-400 rounded text-sm uppercase font-mono tracking-wide bg-white"
         >
-        <p class="text-[10px] text-gray-500 mt-0.5">* Format pattern: ID_IQ_300_01</p>
+        <p class="text-[10px] text-gray-500 mt-1">
+          * Enter letters & numbers only. Underscores (_) are added automatically.<br>
+          <span class="text-gray-400">(Ketik huruf & angka saja. Garis bawah (_) akan ditambahkan otomatis.)</span>
+        </p>
       </div>
     </div>
 
-    <!-- Dynamic Test Cases Container -->
     <div class="space-y-4">
       <div class="flex justify-between items-center border-b pb-1">
         <h3 class="text-sm font-bold text-gray-700">Test Cases <span class="text-xs text-gray-400">(Max 20)</span></h3>
@@ -63,8 +64,7 @@
       </div>
 
       <div id="testCasesContainer" class="space-y-4">
-        <!-- Dynamic TC Items injected here -->
-      </div>
+        </div>
     </div>
 
     <button id="submitBtn" onclick="handleSubmitAll()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg shadow hover:bg-indigo-700 active:scale-95 transition mt-4">
@@ -74,8 +74,8 @@
   </div>
 
   <script>
-    // ⚠️ Insert your Google Apps Script Web App URL here
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzkkAglI4rdZjDOSItl9zSw90AbkgJRmlErVsgSO1iZ4j7qngGSXSeVI2p4I9sMe54caw/exec";
+    // 🔥 config.js에서 가져온 URL 환경변수 참조
+    const GAS_WEB_APP_URL = window.ENV && window.ENV.GAS_WEB_APP_URL ? window.ENV.GAS_WEB_APP_URL : "";
     
     let tcCount = 0;
     const MAX_TC = 20;
@@ -86,11 +86,9 @@
       if (localStorage.getItem('qa_solId')) document.getElementById('solUserId').value = localStorage.getItem('qa_solId');
       if (localStorage.getItem('qa_caseBase')) document.getElementById('caseIdBase').value = localStorage.getItem('qa_caseBase');
       
-      // Default 1 TC Item added on load
       addTestCase();
     };
 
-    // Auto-save Profile Fields
     ['department', 'employeeId', 'solUserId', 'caseIdBase'].forEach(id => {
       document.getElementById(id).addEventListener('input', () => {
         localStorage.setItem('qa_dept', document.getElementById('department').value);
@@ -104,18 +102,19 @@
       });
     });
 
-    // Sanitize Case ID Base (Allow ID_IQ_300_01 pattern)
-    function sanitizeCaseIdBase(input) {
-      input.value = input.value.replace(/[^a-zA-Z0-9_]/g, '').toUpperCase();
+    function autoFormatCaseIdBase(input) {
+      let raw = input.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+      let formatted = "";
+      if (raw.length > 0) formatted += raw.substring(0, 2);
+      if (raw.length > 2) formatted += "_" + raw.substring(2, 4);
+      if (raw.length > 4) formatted += "_" + raw.substring(4, 7);
+      if (raw.length > 7) formatted += "_" + raw.substring(7, 9);
+      if (raw.length > 9) formatted += "_" + raw.substring(9);
+
+      input.value = formatted;
       updateAllFullCaseIds();
     }
 
-    // Validate Base Pattern (e.g., ID_IQ_300_01)
-    function validateCaseIdBase(base) {
-      return /^[A-Z0-9]+(_[A-Z0-9]+)+$/.test(base);
-    }
-
-    // Add Dynamic Test Case Card
     function addTestCase() {
       const container = document.getElementById('testCasesContainer');
       const currentCards = container.getElementsByClassName('tc-card');
@@ -156,7 +155,6 @@
             </select>
           </div>
 
-          <!-- Conditional Fields -->
           <div class="cond-fields space-y-2 hidden border-l-4 border-amber-400 pl-2 bg-amber-50 p-2 rounded-r">
             <div>
               <label class="text-xs font-bold text-amber-800">Situation <span class="text-amber-600 font-normal">(Situasi)</span></label>
@@ -179,14 +177,12 @@
       reindexTestCases();
     }
 
-    // Remove Dynamic Card & Re-index TC Numbers
     function removeTestCase(btn) {
       const card = btn.closest('.tc-card');
       card.remove();
       reindexTestCases();
     }
 
-    // Update Full Case IDs across all cards
     function updateAllFullCaseIds() {
       reindexTestCases();
     }
@@ -216,7 +212,6 @@
       }
     }
 
-    // File to Base64 Promisify Helper
     function fileToBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -226,14 +221,18 @@
       });
     }
 
-    // Batch Submit All Dynamic Cases
     async function handleSubmitAll() {
       const caseBase = document.getElementById('caseIdBase').value.trim().toUpperCase();
       const statusMsg = document.getElementById('statusMsg');
       const btn = document.getElementById('submitBtn');
 
-      if (!caseBase || !validateCaseIdBase(caseBase)) {
-        alert("Invalid Case ID Base format! (e.g. ID_IQ_300_01)\n\nFormat Base tidak valid! Gunakan format seperti ID_IQ_300_01.");
+      if (!GAS_WEB_APP_URL) {
+        alert("Configuration Error: GAS_WEB_APP_URL is not defined in config.js");
+        return;
+      }
+
+      if (!caseBase) {
+        alert("Please enter Case ID Base.\n(Mohon isi Case ID Base.)");
         document.getElementById('caseIdBase').focus();
         return;
       }
@@ -244,7 +243,6 @@
         return;
       }
 
-      // Check images attached for all cases
       for (let i = 0; i < cards.length; i++) {
         const fileInput = cards[i].querySelector('.tc-file');
         if (fileInput.files.length === 0) {
@@ -297,7 +295,6 @@
         statusMsg.className = "text-center text-xs mt-2 font-semibold text-green-600";
         statusMsg.innerText = `✅ All ${cards.length} cases submitted successfully!`;
 
-        // Clear dynamic cases & reset to 1 default card (Profile values are kept)
         document.getElementById('testCasesContainer').innerHTML = "";
         tcCount = 0;
         addTestCase();

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,14 +9,16 @@
   <!-- 환경변수 설정 파일 로드 -->
   <script src="./config.js"></script>
 </head>
+
 <body class="bg-gray-100 p-4 max-w-md mx-auto">
   <div class="bg-white p-6 rounded-xl shadow-md space-y-4">
     <h2 class="text-xl font-bold text-gray-800 border-b pb-2">SOL QA Proof Upload</h2>
-    
+
     <!-- Profile Section (Auto-saved) -->
     <div class="space-y-3 bg-blue-50 p-3 rounded-lg">
-      <p class="text-xs font-semibold text-blue-600">👤 User Profile <span class="text-gray-500 font-normal">(Auto-saved / Disimpan otomatis)</span></p>
-      
+      <p class="text-xs font-semibold text-blue-600">👤 User Profile <span class="text-gray-500 font-normal">(Auto-saved
+          / Disimpan otomatis)</span></p>
+
       <div>
         <label class="text-xs text-gray-600">Department <span class="text-gray-400">(Departemen)</span></label>
         <select id="department" class="w-full p-2 border rounded text-sm bg-white">
@@ -43,17 +46,13 @@
 
       <!-- Case ID Base Section -->
       <div>
-        <label class="text-xs font-bold text-indigo-700">Case ID Base * <span class="text-gray-400 font-normal">(Prefix)</span></label>
-        <input 
-          type="text" 
-          id="caseIdBase" 
-          placeholder="e.g. Type IDIQ30001" 
-          oninput="autoFormatCaseIdBase(this)"
-          class="w-full p-2 border-2 border-indigo-400 rounded text-sm uppercase font-mono tracking-wide bg-white transition-colors"
-        >
+        <label class="text-xs font-bold text-indigo-700">Case ID Base * <span
+            class="text-gray-400 font-normal">(Prefix)</span></label>
+        <input type="text" id="caseIdBase" placeholder="e.g. Type IDIQ30001" oninput="autoFormatCaseIdBase(this)"
+          class="w-full p-2 border-2 border-indigo-400 rounded text-sm uppercase font-mono tracking-wide bg-white transition-colors">
         <!-- 🔥 실시간 에러 피드백 메시지 영역 -->
         <p id="caseIdErrorMsg" class="text-[11px] font-semibold text-red-600 mt-1 hidden"></p>
-        
+
         <p class="text-[10px] text-gray-500 mt-1">
           * Enter letters & numbers only. Underscores (_) are added automatically.<br>
           <span class="text-gray-400">(Ketik huruf & angka saja. Garis bawah (_) akan ditambahkan otomatis.)</span>
@@ -65,7 +64,8 @@
     <div class="space-y-4">
       <div class="flex justify-between items-center border-b pb-1">
         <h3 class="text-sm font-bold text-gray-700">Test Cases <span class="text-xs text-gray-400">(Max 20)</span></h3>
-        <button type="button" onclick="addTestCase()" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-bold px-3 py-1 rounded-lg text-xs border border-indigo-200 transition">
+        <button type="button" onclick="addTestCase()"
+          class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-bold px-3 py-1 rounded-lg text-xs border border-indigo-200 transition">
           + Add Case <span class="font-normal">(Tambah)</span>
         </button>
       </div>
@@ -76,7 +76,8 @@
     </div>
 
     <!-- 🔥 실시간 상태에 따라 비활성화되는 버튼 -->
-    <button id="submitBtn" onclick="handleSubmitAll()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg shadow hover:bg-indigo-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition mt-4">
+    <button id="submitBtn" onclick="handleSubmitAll()"
+      class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg shadow hover:bg-indigo-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition mt-4">
       Submit All Cases <span class="font-normal text-xs">(Kirim Semua)</span>
     </button>
     <p id="statusMsg" class="text-center text-xs mt-2 font-semibold"></p>
@@ -84,7 +85,7 @@
 
   <script>
     const GAS_WEB_APP_URL = window.ENV && window.ENV.GAS_WEB_APP_URL ? window.ENV.GAS_WEB_APP_URL : "";
-    
+
     let tcCount = 0;
     const MAX_TC = 20;
 
@@ -99,7 +100,7 @@
       } else {
         validateCaseIdBase();
       }
-      
+
       addTestCase();
     };
 
@@ -109,7 +110,7 @@
         localStorage.setItem('qa_empId', document.getElementById('employeeId').value);
         localStorage.setItem('qa_solId', document.getElementById('solUserId').value);
         localStorage.setItem('qa_caseBase', document.getElementById('caseIdBase').value);
-        
+
         if (id === 'caseIdBase') {
           updateAllFullCaseIds();
         }
@@ -118,9 +119,11 @@
 
     // 🔥 정규식 자동 마스킹 및 실시간 검증
     function autoFormatCaseIdBase(input) {
+      // 1. 유저가 언더바(_)나 공백을 포함해 입력/복붙하더라도 일단 알파벳, 숫자만 추출
       let raw = input.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+
+      // 2. ID_IQ_300_01 규격으로 다시 언더바 자르기 (2 / 2 / 3 / 2)
       let formatted = "";
-      
       if (raw.length > 0) formatted += raw.substring(0, 2);
       if (raw.length > 2) formatted += "_" + raw.substring(2, 4);
       if (raw.length > 4) formatted += "_" + raw.substring(4, 7);
@@ -168,7 +171,7 @@
     function addTestCase() {
       const container = document.getElementById('testCasesContainer');
       const currentCards = container.getElementsByClassName('tc-card');
-      
+
       if (currentCards.length >= MAX_TC) {
         alert(`Maximum ${MAX_TC} cases allowed.\n(Maksimal ${MAX_TC} case saja.)`);
         return;
@@ -245,7 +248,7 @@
         const tcIndex = idx + 1;
         const tcSuffix = `TC${String(tcIndex).padStart(2, '0')}`;
         const fullCaseId = baseVal ? `${baseVal}_${tcSuffix}` : tcSuffix;
-        
+
         card.querySelector('.full-case-id').value = fullCaseId;
         card.querySelector('span.text-gray-500').innerText = `Case #${tcIndex}`;
       });
@@ -357,4 +360,5 @@
     }
   </script>
 </body>
+
 </html>

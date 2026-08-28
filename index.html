@@ -96,11 +96,10 @@
         </div>
       </div>
 
-      <!-- Scenario ID Section (단독 전체 너비 배치) -->
+      <!-- Scenario ID Section -->
       <div>
         <label class="text-xs font-bold text-indigo-700">Scenario ID * <span class="text-gray-400 font-normal">(Prefix)</span></label>
         
-        <!-- 입력 전 꼭 읽는 힌트 박스 -->
         <div class="bg-indigo-100/80 p-2 rounded-md my-1.5 border border-indigo-200 shadow-sm">
           <p class="text-[11px] font-bold text-indigo-900 leading-tight">
             💡 Type letters & numbers ONLY — Underscores (_) are added AUTOMATICALLY!
@@ -132,7 +131,7 @@
         <p id="caseIdErrorMsg" class="text-[11px] font-semibold text-red-600 mt-1 hidden"></p>
       </div>
 
-      <!-- Start TC Section (완전히 독립된 하단 행으로 분리) -->
+      <!-- Start TC Section -->
       <div>
         <label class="text-xs font-bold text-indigo-700">Start TC <span class="text-gray-400 font-normal">(Nomor Uji Awal)</span></label>
         <select id="startTcSelect" onchange="updateAllFullCaseIds(); this.blur();" class="w-full mt-0.5 p-2 border-2 border-indigo-400 rounded text-sm bg-white font-mono font-bold text-indigo-800">
@@ -486,6 +485,12 @@
       container.insertAdjacentHTML('beforeend', cardHtml);
       reindexTestCases();
       validateFormState();
+
+      // 🔥 새롭게 추가된 카드 요소 위치로 화면 부드럽게 자동 스크롤 이동
+      const newCard = container.lastElementChild;
+      if (newCard && currentCards.length > 1) {
+        newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
 
     function removeTestCase(btn, tcId) {

@@ -404,7 +404,6 @@
       const baseVal = document.getElementById('caseIdBase').value.trim().toUpperCase();
       const fullCaseId = baseVal ? `${baseVal}_${tcSuffix}` : tcSuffix;
 
-      <!-- 🔥 Situation, Expected Result에도 X자 버튼 적용 -->
       const cardHtml = `
         <div class="tc-card border rounded-lg p-3 bg-gray-50 space-y-3 relative" data-tc-id="${currentTcId}">
           <div class="flex justify-between items-center border-b pb-1">
@@ -447,16 +446,21 @@
             </div>
           </div>
 
+          <!-- 🔥 이미지 전용 업로드 안내 라벨 및 제한 적용 -->
           <div>
-            <label class="text-xs font-bold text-gray-700">Proof Images * <span class="text-gray-400 font-normal">(Multiple)</span></label>
+            <div class="flex justify-between items-baseline">
+              <label class="text-xs font-bold text-gray-700">Proof Images Only *</label>
+              <span class="text-[10px] font-semibold text-indigo-600">(Images only, No Video)</span>
+            </div>
             
             <div class="mt-1">
               <label class="inline-flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 text-indigo-700 px-3 py-2 rounded-lg text-xs font-bold cursor-pointer hover:bg-indigo-100 active:scale-95 transition">
-                <span>📷 + Add Images (Tambah Gambar)</span>
+                <span>📷 + Attach Screenshots / Images <span class="font-normal text-[10px]">(Hanya Gambar)</span></span>
+                <!-- accept 속성에 이미지 확장자 명시 -->
                 <input 
                   type="file" 
                   multiple 
-                  accept="image/*"
+                  accept="image/png, image/jpeg, image/jpg, image/*"
                   onchange="handleFilesSelect(event, ${currentTcId})"
                   class="hidden"
                 >
@@ -504,6 +508,14 @@
     function handleFilesSelect(e, tcId) {
       const newFiles = Array.from(e.target.files);
       if (newFiles.length === 0) return;
+
+      // 동적 파일 검증 (이미지가 아닌 파일 차단)
+      const nonImageFiles = newFiles.filter(f => !f.type.startsWith('image/'));
+      if (nonImageFiles.length > 0) {
+        alert("⚠️ Only image files (PNG, JPG) are allowed. Videos cannot be uploaded.\n(Hanya 파일 이미지만 허용됩니다. 동영상은 업로드 불가합니다.)");
+        e.target.value = "";
+        return;
+      }
 
       if (!tcFilesStore[tcId]) tcFilesStore[tcId] = [];
       tcFilesStore[tcId] = tcFilesStore[tcId].concat(newFiles);

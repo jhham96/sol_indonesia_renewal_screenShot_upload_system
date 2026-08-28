@@ -144,16 +144,24 @@
       <div class="flex justify-between items-center border-b pb-1">
         <h3 class="text-sm font-bold text-gray-700">Test Cases <span class="text-xs text-gray-400">(Max 20)</span></h3>
         <button type="button" onclick="addTestCase()" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-bold px-3 py-1 rounded-lg text-xs border border-indigo-200 transition">
-          + Add Case <span class="font-normal">(Tambah)</span>
+          + Add Case
         </button>
       </div>
 
       <div id="testCasesContainer" class="space-y-4"></div>
     </div>
 
-    <p id="globalErrorMsg" class="text-xs font-semibold text-red-600 text-center hidden mt-2"></p>
+    <!-- 🔥 Submit 바로 위에 크게 위치시킨 Add Case 버튼 -->
+    <div class="pt-2">
+      <button type="button" onclick="addTestCase()" class="w-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold py-2.5 rounded-lg border-2 border-dashed border-indigo-300 transition text-sm flex items-center justify-center gap-1">
+        <span>➕ Add Another Case</span>
+        <span class="font-normal text-xs text-indigo-500">(Tambah Case)</span>
+      </button>
+    </div>
 
-    <button id="submitBtn" onclick="handleSubmitAll()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg shadow hover:bg-indigo-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition mt-2">
+    <p id="globalErrorMsg" class="text-xs font-semibold text-red-600 text-center hidden mt-1"></p>
+
+    <button id="submitBtn" onclick="handleSubmitAll()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg shadow hover:bg-indigo-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition mt-1">
       Submit All Cases <span class="font-normal text-xs">(Kirim Semua)</span>
     </button>
     <p id="statusMsg" class="text-center text-xs mt-2 font-semibold"></p>
@@ -486,7 +494,7 @@
       reindexTestCases();
       validateFormState();
 
-      // 🔥 새롭게 추가된 카드 요소 위치로 화면 부드럽게 자동 스크롤 이동
+      // 새롭게 추가된 카드 요소 위치로 화면 부드럽게 자동 스크롤 이동
       const newCard = container.lastElementChild;
       if (newCard && currentCards.length > 1) {
         newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

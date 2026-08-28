@@ -10,8 +10,10 @@
   <div class="bg-white p-6 rounded-xl shadow-md space-y-4">
     <h2 class="text-xl font-bold text-gray-800 border-b pb-2">SOL QA Proof Upload</h2>
     
+    <!-- Profile Section (Auto-saved) -->
     <div class="space-y-3 bg-blue-50 p-3 rounded-lg">
       <p class="text-xs font-semibold text-blue-600">👤 User Profile <span class="text-gray-500 font-normal">(Auto-saved / Disimpan otomatis)</span></p>
+      
       <div>
         <label class="text-xs text-gray-600">Department <span class="text-gray-400">(Departemen)</span></label>
         <select id="department" class="w-full p-2 border rounded text-sm bg-white">
@@ -25,6 +27,7 @@
           <option value="etc">etc</option>
         </select>
       </div>
+
       <div class="flex gap-2">
         <div class="w-1/2">
           <label class="text-xs text-gray-600">Employee ID <span class="text-gray-400">(NIP)</span></label>
@@ -35,164 +38,277 @@
           <input type="text" id="solUserId" placeholder="e.g. IDSOLTEST103" class="w-full p-2 border rounded text-sm">
         </div>
       </div>
-    </div>
 
-    <div class="space-y-3">
+      <!-- 🔥 Case ID Base (고정 저장 영역) -->
       <div>
-        <label class="text-xs font-bold text-gray-700">Case ID * <span class="text-gray-400 font-normal">(ID Kasus)</span></label>
+        <label class="text-xs font-bold text-indigo-700">Case ID Base * <span class="text-gray-400 font-normal">(Prefix)</span></label>
         <input 
           type="text" 
-          id="caseId" 
-          placeholder="e.g. ID_IQ_300_01_TC01" 
-          oninput="sanitizeAndUppercaseCaseId(this)"
-          class="w-full p-2 border-2 border-indigo-400 rounded text-sm uppercase font-mono tracking-wide"
+          id="caseIdBase" 
+          placeholder="e.g. ID_IQ_300_01" 
+          oninput="sanitizeCaseIdBase(this)"
+          class="w-full p-2 border-2 border-indigo-400 rounded text-sm uppercase font-mono tracking-wide bg-white"
         >
-        <p class="text-[10px] text-gray-400 mt-1">* Format pattern required: ID_IQ_300_01_TC01</p>
-      </div>
-
-      <div>
-        <label class="text-xs font-bold text-gray-700">Test Result <span class="text-gray-400 font-normal">(Hasil Tes)</span></label>
-        <select id="testResult" onchange="toggleConditionalFields()" class="w-full p-2 border rounded text-sm">
-          <option value="Pass">Pass</option>
-          <option value="Fail">Fail</option>
-          <option value="Improvement">Improvement</option>
-        </select>
-      </div>
-
-      <div id="conditionalFields" class="space-y-3 hidden border-l-4 border-amber-400 pl-3 py-1 bg-amber-50 rounded-r">
-        <div>
-          <label class="text-xs font-bold text-amber-800">Situation <span class="text-amber-600 font-normal">(Deskripsi Masalah / Situasi)</span></label>
-          <textarea id="situation" rows="2" placeholder="Describe the problem encountered / Jelaskan masalah yang terjadi" class="w-full p-2 border rounded text-sm"></textarea>
-        </div>
-        <div>
-          <label class="text-xs font-bold text-amber-800">Expected Result <span class="text-amber-600 font-normal">(Hasil yang Diharapkan)</span></label>
-          <textarea id="expectedResult" rows="2" placeholder="Describe expected behavior / Hasil yang seharusnya" class="w-full p-2 border rounded text-sm"></textarea>
-        </div>
-      </div>
-
-      <div>
-        <label class="text-xs font-bold text-gray-700">Test Proof Image * <span class="text-gray-400 font-normal">(Bukti Gambar)</span></label>
-        <input type="file" id="proofFile" accept="image/*" class="w-full text-xs text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded file:border-0 file:bg-indigo-50 file:text-indigo-700">
+        <p class="text-[10px] text-gray-500 mt-0.5">* Format pattern: ID_IQ_300_01</p>
       </div>
     </div>
 
-    <button id="submitBtn" onclick="handleSubmit()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg shadow hover:bg-indigo-700 active:scale-95 transition">
-      Submit & Next <span class="font-normal text-xs">(Kirim & Lanjut)</span>
+    <!-- Dynamic Test Cases Container -->
+    <div class="space-y-4">
+      <div class="flex justify-between items-center border-b pb-1">
+        <h3 class="text-sm font-bold text-gray-700">Test Cases <span class="text-xs text-gray-400">(Max 20)</span></h3>
+        <button type="button" onclick="addTestCase()" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-bold px-3 py-1 rounded-lg text-xs border border-indigo-200 transition">
+          + Add Case <span class="font-normal">(Tambah)</span>
+        </button>
+      </div>
+
+      <div id="testCasesContainer" class="space-y-4">
+        <!-- Dynamic TC Items injected here -->
+      </div>
+    </div>
+
+    <button id="submitBtn" onclick="handleSubmitAll()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg shadow hover:bg-indigo-700 active:scale-95 transition mt-4">
+      Submit All Cases <span class="font-normal text-xs">(Kirim Semua)</span>
     </button>
     <p id="statusMsg" class="text-center text-xs mt-2 font-semibold"></p>
   </div>
 
   <script>
-    // ⚠️ 1단계에서 배포한 Google Apps Script Web App URL 입력
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzkkAglI4rdZjDOSItl9zSw90AbkgJRmlErVsgSO1iZ4j7qngGSXSeVI2p4I9sMe54caw/exec";
+    // ⚠️ Insert your Google Apps Script Web App URL here
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
+    
+    let tcCount = 0;
+    const MAX_TC = 20;
 
     window.onload = () => {
       if (localStorage.getItem('qa_dept')) document.getElementById('department').value = localStorage.getItem('qa_dept');
       if (localStorage.getItem('qa_empId')) document.getElementById('employeeId').value = localStorage.getItem('qa_empId');
       if (localStorage.getItem('qa_solId')) document.getElementById('solUserId').value = localStorage.getItem('qa_solId');
-      toggleConditionalFields();
+      if (localStorage.getItem('qa_caseBase')) document.getElementById('caseIdBase').value = localStorage.getItem('qa_caseBase');
+      
+      // Default 1 TC Item added on load
+      addTestCase();
     };
 
-    ['department', 'employeeId', 'solUserId'].forEach(id => {
-      document.getElementById(id).addEventListener('change', () => {
+    // Auto-save Profile Fields
+    ['department', 'employeeId', 'solUserId', 'caseIdBase'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
         localStorage.setItem('qa_dept', document.getElementById('department').value);
         localStorage.setItem('qa_empId', document.getElementById('employeeId').value);
         localStorage.setItem('qa_solId', document.getElementById('solUserId').value);
+        localStorage.setItem('qa_caseBase', document.getElementById('caseIdBase').value);
+        
+        if (id === 'caseIdBase') {
+          updateAllFullCaseIds();
+        }
       });
     });
 
-    // Real-time input sanitizer (uppercase & allow letters, numbers, underscores)
-    function sanitizeAndUppercaseCaseId(input) {
+    // Sanitize Case ID Base (Allow ID_IQ_300_01 pattern)
+    function sanitizeCaseIdBase(input) {
       input.value = input.value.replace(/[^a-zA-Z0-9_]/g, '').toUpperCase();
+      updateAllFullCaseIds();
     }
 
-    // Strict pattern validation for format like ID_IQ_300_01_TC01
-    function validateCaseIdFormat(caseId) {
-      const caseIdRegex = /^[A-Z0-9]+(_[A-Z0-9]+)+$/;
-      return caseIdRegex.test(caseId);
+    // Validate Base Pattern (e.g., ID_IQ_300_01)
+    function validateCaseIdBase(base) {
+      return /^[A-Z0-9]+(_[A-Z0-9]+)+$/.test(base);
     }
 
-    function toggleConditionalFields() {
-      const result = document.getElementById('testResult').value;
-      const condDiv = document.getElementById('conditionalFields');
-      if (result === 'Fail' || result === 'Improvement') {
+    // Add Dynamic Test Case Card
+    function addTestCase() {
+      const container = document.getElementById('testCasesContainer');
+      const currentCards = container.getElementsByClassName('tc-card');
+      
+      if (currentCards.length >= MAX_TC) {
+        alert(`Maximum ${MAX_TC} cases allowed.\n(Maksimal ${MAX_TC} case saja.)`);
+        return;
+      }
+
+      tcCount++;
+      const tcIndex = currentCards.length + 1;
+      const tcSuffix = `TC${String(tcIndex).padStart(2, '0')}`;
+      const baseVal = document.getElementById('caseIdBase').value.trim().toUpperCase();
+      const fullCaseId = baseVal ? `${baseVal}_${tcSuffix}` : tcSuffix;
+
+      const cardHtml = `
+        <div class="tc-card border rounded-lg p-3 bg-gray-50 space-y-3 relative" data-tc-id="${tcCount}">
+          <div class="flex justify-between items-center border-b pb-1">
+            <span class="text-xs font-bold text-gray-500">Case #${tcIndex}</span>
+            ${currentCards.length > 0 ? `
+              <button type="button" onclick="removeTestCase(this)" class="text-xs text-red-500 hover:text-red-700 font-bold">
+                ✕ Delete
+              </button>
+            ` : ''}
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-gray-700">Case ID <span class="text-xs font-normal text-gray-400">(Auto Readonly)</span></label>
+            <input type="text" class="full-case-id w-full p-2 border rounded text-sm bg-gray-200 font-mono font-bold text-indigo-800" value="${fullCaseId}" readonly>
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-gray-700">Test Result</label>
+            <select class="tc-result w-full p-2 border rounded text-sm bg-white" onchange="toggleCondField(this)">
+              <option value="Pass">Pass</option>
+              <option value="Fail">Fail</option>
+              <option value="Improvement">Improvement</option>
+            </select>
+          </div>
+
+          <!-- Conditional Fields -->
+          <div class="cond-fields space-y-2 hidden border-l-4 border-amber-400 pl-2 bg-amber-50 p-2 rounded-r">
+            <div>
+              <label class="text-xs font-bold text-amber-800">Situation <span class="text-amber-600 font-normal">(Situasi)</span></label>
+              <textarea class="tc-situation w-full p-1.5 border rounded text-xs" rows="2" placeholder="Describe the problem..."></textarea>
+            </div>
+            <div>
+              <label class="text-xs font-bold text-amber-800">Expected Result <span class="text-amber-600 font-normal">(Hasil Diharapkan)</span></label>
+              <textarea class="tc-expected w-full p-1.5 border rounded text-xs" rows="2" placeholder="Describe expected behavior..."></textarea>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-gray-700">Proof Image *</label>
+            <input type="file" class="tc-file w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-indigo-50 file:text-indigo-700" accept="image/*">
+          </div>
+        </div>
+      `;
+
+      container.insertAdjacentHTML('beforeend', cardHtml);
+      reindexTestCases();
+    }
+
+    // Remove Dynamic Card & Re-index TC Numbers
+    function removeTestCase(btn) {
+      const card = btn.closest('.tc-card');
+      card.remove();
+      reindexTestCases();
+    }
+
+    // Update Full Case IDs across all cards
+    function updateAllFullCaseIds() {
+      reindexTestCases();
+    }
+
+    function reindexTestCases() {
+      const cards = document.querySelectorAll('.tc-card');
+      const baseVal = document.getElementById('caseIdBase').value.trim().toUpperCase();
+
+      cards.forEach((card, idx) => {
+        const tcIndex = idx + 1;
+        const tcSuffix = `TC${String(tcIndex).padStart(2, '0')}`;
+        const fullCaseId = baseVal ? `${baseVal}_${tcSuffix}` : tcSuffix;
+        
+        card.querySelector('.full-case-id').value = fullCaseId;
+        card.querySelector('span.text-gray-500').innerText = `Case #${tcIndex}`;
+      });
+    }
+
+    function toggleCondField(select) {
+      const condDiv = select.closest('.tc-card').querySelector('.cond-fields');
+      if (select.value === 'Fail' || select.value === 'Improvement') {
         condDiv.classList.remove('hidden');
       } else {
         condDiv.classList.add('hidden');
-        document.getElementById('situation').value = "";
-        document.getElementById('expectedResult').value = "";
+        condDiv.querySelector('.tc-situation').value = '';
+        condDiv.querySelector('.tc-expected').value = '';
       }
     }
 
-    async function handleSubmit() {
-      const caseIdInput = document.getElementById('caseId');
-      const fileInput = document.getElementById('proofFile');
+    // File to Base64 Promisify Helper
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Batch Submit All Dynamic Cases
+    async function handleSubmitAll() {
+      const caseBase = document.getElementById('caseIdBase').value.trim().toUpperCase();
       const statusMsg = document.getElementById('statusMsg');
       const btn = document.getElementById('submitBtn');
 
-      const formattedCaseId = caseIdInput.value.trim().toUpperCase();
-
-      // Validate Case ID format
-      if (!formattedCaseId || !validateCaseIdFormat(formattedCaseId)) {
-        alert("Invalid Case ID format! (e.g. ID_IQ_300_01_TC01)\n\nFormat Case ID tidak valid! Gunakan format seperti ID_IQ_300_01_TC01.");
-        caseIdInput.focus();
+      if (!caseBase || !validateCaseIdBase(caseBase)) {
+        alert("Invalid Case ID Base format! (e.g. ID_IQ_300_01)\n\nFormat Base tidak valid! Gunakan format seperti ID_IQ_300_01.");
+        document.getElementById('caseIdBase').focus();
         return;
       }
 
-      if (fileInput.files.length === 0) {
-        alert("Please attach a proof image.\n(Mohon lampirkan bukti gambar.)");
+      const cards = document.querySelectorAll('.tc-card');
+      if (cards.length === 0) {
+        alert("Please add at least one test case.");
         return;
+      }
+
+      // Check images attached for all cases
+      for (let i = 0; i < cards.length; i++) {
+        const fileInput = cards[i].querySelector('.tc-file');
+        if (fileInput.files.length === 0) {
+          alert(`Please attach proof image for Case #${i + 1}.\n(Mohon unggah gambar bukti untuk Case #${i + 1}.)`);
+          return;
+        }
       }
 
       btn.disabled = true;
-      btn.innerText = "Uploading... (Mengunggah...)";
-      statusMsg.innerText = "";
+      statusMsg.className = "text-center text-xs mt-2 font-semibold text-blue-600";
 
-      const file = fileInput.files[0];
-      const reader = new FileReader();
+      const dept = document.getElementById('department').value;
+      const empId = document.getElementById('employeeId').value;
+      const solId = document.getElementById('solUserId').value;
 
-      reader.onload = async function(e) {
-        const payload = {
-          department: document.getElementById('department').value,
-          employeeId: document.getElementById('employeeId').value,
-          solUserId: document.getElementById('solUserId').value,
-          caseId: formattedCaseId,
-          testResult: document.getElementById('testResult').value,
-          situation: document.getElementById('situation').value,
-          expectedResult: document.getElementById('expectedResult').value,
-          fileName: file.name,
-          fileMimeType: file.type,
-          fileData: e.target.result
-        };
+      try {
+        for (let i = 0; i < cards.length; i++) {
+          const card = cards[i];
+          const fullCaseId = card.querySelector('.full-case-id').value;
+          const result = card.querySelector('.tc-result').value;
+          const situation = card.querySelector('.tc-situation').value;
+          const expected = card.querySelector('.tc-expected').value;
+          const file = card.querySelector('.tc-file').files[0];
 
-        try {
+          statusMsg.innerText = `Uploading Case ${i + 1} of ${cards.length} (${fullCaseId})...`;
+
+          const fileData = await fileToBase64(file);
+
+          const payload = {
+            department: dept,
+            employeeId: empId,
+            solUserId: solId,
+            caseId: fullCaseId,
+            testResult: result,
+            situation: situation,
+            expectedResult: expected,
+            fileName: file.name,
+            fileMimeType: file.type,
+            fileData: fileData
+          };
+
           await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
-
-          statusMsg.className = "text-center text-xs mt-2 font-semibold text-green-600";
-          statusMsg.innerText = `✅ Submitted: ${formattedCaseId} (Berhasil dikirim!)`;
-
-          // Clear variable inputs while keeping profile data
-          caseIdInput.value = "";
-          fileInput.value = "";
-          document.getElementById('testResult').value = "Pass";
-          toggleConditionalFields();
-          caseIdInput.focus();
-
-        } catch (err) {
-          statusMsg.className = "text-center text-xs mt-2 font-semibold text-red-600";
-          statusMsg.innerText = "❌ Upload Failed (Gagal): " + err.toString();
-        } finally {
-          btn.disabled = false;
-          btn.innerHTML = 'Submit & Next <span class="font-normal text-xs">(Kirim & Lanjut)</span>';
         }
-      };
 
-      reader.readAsDataURL(file);
+        statusMsg.className = "text-center text-xs mt-2 font-semibold text-green-600";
+        statusMsg.innerText = `✅ All ${cards.length} cases submitted successfully!`;
+
+        // Clear dynamic cases & reset to 1 default card (Profile values are kept)
+        document.getElementById('testCasesContainer').innerHTML = "";
+        tcCount = 0;
+        addTestCase();
+
+      } catch (err) {
+        statusMsg.className = "text-center text-xs mt-2 font-semibold text-red-600";
+        statusMsg.innerText = "❌ Upload Failed (Gagal): " + err.toString();
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Submit All Cases <span class="font-normal text-xs">(Kirim Semua)</span>';
+      }
     }
   </script>
 </body>

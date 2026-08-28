@@ -95,11 +95,9 @@
             class="w-full p-2 border-2 border-indigo-400 rounded text-sm uppercase font-mono tracking-wide bg-white transition-colors"
           >
         </div>
-        <!-- 🔥 시작 TC 번호 선택 옵션 추가 -->
         <div class="w-1/4">
           <label class="text-xs font-bold text-indigo-700">Start TC</label>
           <select id="startTcSelect" onchange="updateAllFullCaseIds()" class="w-full p-2 border-2 border-indigo-400 rounded text-sm bg-white font-mono font-bold text-indigo-800">
-            <!-- JS로 TC01 ~ TC50 동적 생성 -->
           </select>
         </div>
       </div>
@@ -153,7 +151,6 @@
       addTestCase();
     };
 
-    // 🔥 Start TC 옵션 목록 생성 (TC01 ~ TC50)
     function initStartTcOptions() {
       const select = document.getElementById('startTcSelect');
       select.innerHTML = "";
@@ -417,7 +414,6 @@
       validateFormState();
     }
 
-    // 🔥 시작 TC 번호에 맞춰 전체 카드 번호 다시 계산
     function reindexTestCases() {
       const cards = document.querySelectorAll('.tc-card');
       const baseVal = document.getElementById('caseIdBase').value.trim().toUpperCase();
@@ -570,7 +566,7 @@
       statusMsg.className = "text-center text-xs mt-2 font-semibold text-blue-600";
 
       const dept = document.getElementById('department').value;
-      const empId = document.getElementById('employeeId').value;
+      const empId = document.getElementById('employeeId').value || "NoID";
       const solId = document.getElementById('solUserId').value;
 
       try {
@@ -593,7 +589,9 @@
             const file = files[fIdx];
             const fileData = await fileToBase64(file);
             const ext = file.name.substring(file.name.lastIndexOf("."));
-            const targetFileName = `${fullCaseId}_${fIdx + 1}${ext}`;
+            
+            // 🔥 파일명에 Employee ID 추가된 부분
+            const targetFileName = `${fullCaseId}_${empId}_${fIdx + 1}${ext}`;
 
             preparedFiles.push({
               fileName: targetFileName,

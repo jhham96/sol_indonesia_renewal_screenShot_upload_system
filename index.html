@@ -139,21 +139,18 @@
       </div>
     </div>
 
-    <!-- Dynamic Test Cases Container -->
+    <!-- Dynamic Test Cases Container (상단 버튼 삭제됨) -->
     <div class="space-y-4">
-      <div class="flex justify-between items-center border-b pb-1">
+      <div class="border-b pb-1">
         <h3 class="text-sm font-bold text-gray-700">Test Cases <span class="text-xs text-gray-400">(Max 20)</span></h3>
-        <button type="button" onclick="addTestCase()" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-bold px-3 py-1 rounded-lg text-xs border border-indigo-200 transition">
-          + Add Case
-        </button>
       </div>
 
       <div id="testCasesContainer" class="space-y-4"></div>
     </div>
 
-    <!-- 🔥 Submit 바로 위에 크게 위치시킨 Add Case 버튼 -->
+    <!-- Submit 바로 위 하단 Add Case 버튼 -->
     <div class="pt-2">
-      <button type="button" onclick="addTestCase()" class="w-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold py-2.5 rounded-lg border-2 border-dashed border-indigo-300 transition text-sm flex items-center justify-center gap-1">
+      <button type="button" id="bottomAddBtn" onclick="addTestCase()" class="w-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold py-2.5 rounded-lg border-2 border-dashed border-indigo-300 transition text-sm flex items-center justify-center gap-1">
         <span>➕ Add Another Case</span>
         <span class="font-normal text-xs text-indigo-500">(Tambah Case)</span>
       </button>
@@ -494,10 +491,11 @@
       reindexTestCases();
       validateFormState();
 
-      // 새롭게 추가된 카드 요소 위치로 화면 부드럽게 자동 스크롤 이동
-      const newCard = container.lastElementChild;
-      if (newCard && currentCards.length > 1) {
-        newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      // 🔥 버튼 클릭 시 '➕ Add Another Case' 버튼이 화면 맨 아래에 위치하도록 스크롤 이동
+      // 덕분에 연속 클릭 시 손가락/마우스 위치를 옮기지 않고 계속 누를 수 있습니다.
+      const bottomAddBtn = document.getElementById('bottomAddBtn');
+      if (bottomAddBtn && currentCards.length > 1) {
+        bottomAddBtn.scrollIntoView({ behavior: 'smooth', block: 'end' });
       }
     }
 

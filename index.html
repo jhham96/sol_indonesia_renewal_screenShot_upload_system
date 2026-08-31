@@ -33,6 +33,32 @@
     </div>
   </div>
 
+  <!-- 🔥 Success Completion Popup Modal -->
+  <div id="successModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-xs shadow-2xl text-center space-y-4 transform transition-all">
+      <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-green-100 border-2 border-green-300">
+        <span class="text-2xl">✅</span>
+      </div>
+      
+      <div>
+        <h3 class="text-lg font-bold text-gray-800">Upload Complete!</h3>
+        <p class="text-xs text-gray-500 mt-1">Pengunggahan selesai 성공적으로 완료되었습니다.</p>
+      </div>
+
+      <div class="bg-green-50 p-3 rounded-lg border border-green-200 text-left space-y-1 text-xs text-green-900">
+        <p class="font-bold flex justify-between">
+          <span>Submitted Cases:</span>
+          <span id="successCaseCount" class="font-extrabold text-green-700">0 cases</span>
+        </p>
+        <p class="text-[11px] text-green-700 leading-tight">All proof images & details have been saved to Google Drive and Spreadsheet.</p>
+      </div>
+
+      <button type="button" onclick="closeSuccessModal()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-xl shadow-md transition active:scale-95 text-sm">
+        OK / Confirm
+      </button>
+    </div>
+  </div>
+
   <div class="bg-white p-6 rounded-xl shadow-md space-y-4">
     <h2 class="text-xl font-bold text-gray-800 border-b pb-2">SOL QA Proof Upload</h2>
     
@@ -45,7 +71,7 @@
         <div id="profileChips" class="flex flex-wrap gap-1.5 mt-1"></div>
       </div>
 
-      <!-- 🔥 OS Select (Android / iOS) -->
+      <!-- OS Select (Android / iOS) -->
       <div>
         <label class="text-xs text-gray-600 font-bold">OS Type <span class="text-gray-400 font-normal">(Perangkat)</span> *</label>
         <div class="grid grid-cols-2 gap-2 mt-1">
@@ -676,6 +702,21 @@
       document.getElementById('loadingModal').classList.add('hidden');
     }
 
+    // 🔥 완료 팝업 모달 열기
+    function showSuccessModal(totalCases) {
+      const modal = document.getElementById('successModal');
+      const countElem = document.getElementById('successCaseCount');
+      if (countElem) {
+        countElem.innerText = `${totalCases} case${totalCases > 1 ? 's' : ''}`;
+      }
+      modal.classList.remove('hidden');
+    }
+
+    // 🔥 완료 팝업 모달 닫기
+    function closeSuccessModal() {
+      document.getElementById('successModal').classList.add('hidden');
+    }
+
     async function handleSubmitAll() {
       const testerName = document.getElementById('testerName').value.trim();
       if (!testerName) {
@@ -707,7 +748,7 @@
       const dept = document.getElementById('department').value;
       const empId = document.getElementById('employeeId').value || "NoID";
       const solId = document.getElementById('solUserId').value;
-      const osType = getSelectedOs(); // 🔥 ANDROID 또는 IOS
+      const osType = getSelectedOs();
 
       // 타임스탬프 (YYYYMMDD & HHMMSS) 생성
       const now = new Date();
@@ -736,7 +777,6 @@
             const fileData = await fileToBase64(file);
             const ext = file.name.substring(file.name.lastIndexOf("."));
             
-            // 🔥 파일명 포맷: ID_ME_100_01_TC01_21100306_ANDROID_20260831_133000_1.png
             const targetFileName = `${fullCaseId}_${empId}_${osType}_${yyyymmdd}_${hhmmss}_${fIdx + 1}${ext}`;
 
             preparedFiles.push({
@@ -751,7 +791,7 @@
             department: dept,
             employeeId: empId,
             solUserId: solId,
-            osType: osType, // 🔥 OS 전달
+            osType: osType,
             caseId: fullCaseId,
             testResult: result,
             situation: situation,
@@ -772,6 +812,10 @@
 
         saveCurrentProfileToQuickList();
 
+        // 🔥 로딩창 닫고 성공 팝업 모달 오픈
+        hideLoadingModal();
+        showSuccessModal(totalCards);
+
         statusMsg.className = "text-center text-xs mt-2 font-semibold text-green-600";
         statusMsg.innerText = `✅ All cases & images submitted successfully!`;
 
@@ -781,10 +825,10 @@
         addTestCase();
 
       } catch (err) {
+        hideLoadingModal();
         statusMsg.className = "text-center text-xs mt-2 font-semibold text-red-600";
         statusMsg.innerText = "❌ Upload Failed (Gagal): " + err.toString();
       } finally {
-        hideLoadingModal();
         validateFormState();
         btn.innerHTML = 'Submit All Cases <span class="font-normal text-xs">(Kirim Semua)</span>';
       }

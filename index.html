@@ -491,7 +491,6 @@
       reindexTestCases();
       validateFormState();
 
-      // 🔥 화면 전체를 가장 자연스럽게 맨 밑으로 스크롤 이동
       if (currentCards.length > 1) {
         window.scrollTo({
           top: document.body.scrollHeight,
@@ -679,6 +678,12 @@
       const empId = document.getElementById('employeeId').value || "NoID";
       const solId = document.getElementById('solUserId').value;
 
+      // 타임스탬프 (YYYYMMDD & HHMMSS) 생성
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const yyyymmdd = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+      const hhmmss = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
       try {
         const totalCards = cards.length;
 
@@ -699,7 +704,9 @@
             const file = files[fIdx];
             const fileData = await fileToBase64(file);
             const ext = file.name.substring(file.name.lastIndexOf("."));
-            const targetFileName = `${fullCaseId}_${empId}_${fIdx + 1}${ext}`;
+            
+            // 4 Level 파일명 규칙: ID_ME_100_01_TC01_21100306_20260831_152713_1.png
+            const targetFileName = `${fullCaseId}_${empId}_${yyyymmdd}_${hhmmss}_${fIdx + 1}${ext}`;
 
             preparedFiles.push({
               fileName: targetFileName,

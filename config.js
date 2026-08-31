@@ -6,5 +6,5 @@ window.ENV = {
     process.env &&
     process.env.NEXT_PUBLIC_GAS_URL
       ? process.env.NEXT_PUBLIC_GAS_URL
-      : "https://script.google.com/macros/s/AKfycbxEyadcXx1XCeRtKzPpzMAeJRQz5dgz0J_xR-HhUXPrn4vBEoP6cQF0WdL_1R-FGaSwTA/exec",
+      : "https://script.google.com/macros/s/AKfycbwooMjhJV_Zq8jMfoDjYeJYL_2MZWf94HdfeHIXdvUTuOMpjoG3f0JVHilL3RO92jt22A/exec",
 };

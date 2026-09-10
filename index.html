@@ -33,7 +33,7 @@
     </div>
   </div>
 
-  <!-- 🔥 Success Completion Popup Modal -->
+  <!-- Success Completion Popup Modal -->
   <div id="successModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl p-6 w-full max-w-xs shadow-2xl text-center space-y-4 transform transition-all">
       <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-green-100 border-2 border-green-300">
@@ -50,7 +50,7 @@
           <span>Submitted Cases:</span>
           <span id="successCaseCount" class="font-extrabold text-green-700">0 cases</span>
         </p>
-        <p class="text-[11px] text-green-700 leading-tight">All proof images & details have been saved to Google Drive and Spreadsheet.</p>
+        <p class="text-[11px] text-green-700 leading-tight">All proof images, videos & details have been saved to Google Drive and Spreadsheet.</p>
       </div>
 
       <button type="button" onclick="closeSuccessModal()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-xl shadow-md transition active:scale-95 text-sm">
@@ -214,6 +214,7 @@
     
     let tcCount = 0;
     const MAX_TC = 20;
+    const MAX_FILE_SIZE_MB = 25; // 개별 파일 최대 용량 제한 (25MB)
     const tcFilesStore = {};
 
     window.onload = () => {
@@ -438,7 +439,7 @@
         const files = tcFilesStore[tcId] || [];
 
         if (files.length === 0) {
-          globalErr.innerText = `⚠️ ${fullCaseId} requires at least 1 proof image.`;
+          globalErr.innerText = `⚠️ ${fullCaseId} requires at least 1 proof image or video.`;
           globalErr.classList.remove('hidden');
           submitBtn.disabled = true;
           return false;
@@ -521,17 +522,17 @@
 
           <div>
             <div class="flex justify-between items-baseline">
-              <label class="text-xs font-bold text-gray-700">Proof Images Only *</label>
-              <span class="text-[10px] font-semibold text-indigo-600">(Images only, No Video)</span>
+              <label class="text-xs font-bold text-gray-700">Proof Media (Images & Videos) *</label>
+              <span class="text-[10px] font-semibold text-indigo-600">(Max 25MB / file)</span>
             </div>
             
             <div class="mt-1">
               <label class="inline-flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 text-indigo-700 px-3 py-2 rounded-lg text-xs font-bold cursor-pointer hover:bg-indigo-100 active:scale-95 transition">
-                <span>📷 + Attach Screenshots / Images <span class="font-normal text-[10px]">(Hanya Gambar)</span></span>
+                <span>📁 + Attach Images & Videos <span class="font-normal text-[10px]">(Gambar & Video)</span></span>
                 <input 
                   type="file" 
                   multiple 
-                  accept="image/png, image/jpeg, image/jpg, image/*"
+                  accept="image/*,video/*,.mp4,.mov,.webm,.avi"
                   onchange="handleFilesSelect(event, ${currentTcId})"
                   class="hidden"
                 >
@@ -587,15 +588,16 @@
       const newFiles = Array.from(e.target.files);
       if (newFiles.length === 0) return;
 
-      const nonImageFiles = newFiles.filter(f => !f.type.startsWith('image/'));
-      if (nonImageFiles.length > 0) {
-        alert("⚠️ Only image files (PNG, JPG) are allowed. Videos cannot be uploaded.\n(Hanya 파일 이미지만 허용됩니다. 동영상은 업로드 불가합니다.)");
-        e.target.value = "";
-        return;
+      // 파일 용량 제한 체크
+      const oversizedFiles = newFiles.filter(f => f.size > MAX_FILE_SIZE_MB * 1024 * 1024);
+      if (oversizedFiles.length > 0) {
+        alert(`⚠️ Some files exceed the ${MAX_FILE_SIZE_MB}MB limit.\n(일부 파일 용량이 ${MAX_FILE_SIZE_MB}MB를 초과하여 제외됩니다.)`);
       }
 
+      const validFiles = newFiles.filter(f => f.size <= MAX_FILE_SIZE_MB * 1024 * 1024);
+
       if (!tcFilesStore[tcId]) tcFilesStore[tcId] = [];
-      tcFilesStore[tcId] = tcFilesStore[tcId].concat(newFiles);
+      tcFilesStore[tcId] = tcFilesStore[tcId].concat(validFiles);
       
       e.target.value = "";
       renderFilePreviews(tcId);
@@ -608,13 +610,26 @@
       container.innerHTML = "";
 
       files.forEach((file, index) => {
+        const isVideo = file.type.startsWith('video/');
         const reader = new FileReader();
         const wrapper = document.createElement('div');
         wrapper.className = "preview-card relative border rounded p-1 bg-white shadow-sm flex flex-col items-center transform transition-all duration-300";
 
         reader.onload = (e) => {
+          let mediaHtml = "";
+          if (isVideo) {
+            mediaHtml = `
+              <div class="w-full h-16 bg-black rounded mb-1 flex items-center justify-center relative overflow-hidden">
+                <video src="${e.target.result}" class="w-full h-full object-cover"></video>
+                <span class="absolute inset-0 flex items-center justify-center bg-black/30 text-white font-bold text-xs">🎬 VIDEO</span>
+              </div>
+            `;
+          } else {
+            mediaHtml = `<img src="${e.target.result}" class="w-full h-16 object-cover rounded mb-1">`;
+          }
+
           wrapper.innerHTML = `
-            <img src="${e.target.result}" class="w-full h-16 object-cover rounded mb-1">
+            ${mediaHtml}
             <span class="text-[9px] font-bold text-gray-500 truncate w-full text-center">#${index + 1}</span>
             <button type="button" onclick="removeSingleFile(${tcId}, ${index})" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold shadow hover:bg-red-700 transition">
               ✕
@@ -677,43 +692,10 @@
       validateFormState();
     }
 
-    // 🔥 [1번 적용] Canvas 기반 이미지 자동 리사이징(1200px 제한) & JPEG 80% 압축 적용 함수
     function fileToBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = new Image();
-          img.onload = () => {
-            const MAX_WIDTH = 1200;
-            const MAX_HEIGHT = 1200;
-            let width = img.width;
-            let height = img.height;
-
-            if (width > height) {
-              if (width > MAX_WIDTH) {
-                height *= MAX_WIDTH / width;
-                width = MAX_WIDTH;
-              }
-            } else {
-              if (height > MAX_HEIGHT) {
-                width *= MAX_HEIGHT / height;
-                height = MAX_HEIGHT;
-              }
-            }
-
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-
-            // 80% JPEG 압축 적용 (용량 80% 이상 절감)
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
-            resolve(compressedBase64);
-          };
-          img.onerror = error => reject(error);
-          img.src = e.target.result;
-        };
+        reader.onload = () => resolve(reader.result);
         reader.onerror = error => reject(error);
         reader.readAsDataURL(file);
       });
@@ -735,7 +717,6 @@
       document.getElementById('loadingModal').classList.add('hidden');
     }
 
-    // 🔥 완료 팝업 모달 열기
     function showSuccessModal(totalCases) {
       const modal = document.getElementById('successModal');
       const countElem = document.getElementById('successCaseCount');
@@ -745,7 +726,6 @@
       modal.classList.remove('hidden');
     }
 
-    // 🔥 완료 팝업 모달 닫기
     function closeSuccessModal() {
       document.getElementById('successModal').classList.add('hidden');
     }
@@ -783,7 +763,6 @@
       const solId = document.getElementById('solUserId').value;
       const osType = getSelectedOs();
 
-      // 타임스탬프 (YYYYMMDD & HHMMSS) 생성
       const now = new Date();
       const pad = (n) => String(n).padStart(2, '0');
       const yyyymmdd = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
@@ -807,14 +786,14 @@
           const preparedFiles = [];
           for (let fIdx = 0; fIdx < files.length; fIdx++) {
             const file = files[fIdx];
-            // 이미지 압축 적용된 Base64 데이터 생성 (JPEG 포맷)
             const fileData = await fileToBase64(file);
+            const ext = file.name.substring(file.name.lastIndexOf("."));
             
-            const targetFileName = `${fullCaseId}_${empId}_${osType}_${yyyymmdd}_${hhmmss}_${fIdx + 1}.jpg`;
+            const targetFileName = `${fullCaseId}_${empId}_${osType}_${yyyymmdd}_${hhmmss}_${fIdx + 1}${ext}`;
 
             preparedFiles.push({
               fileName: targetFileName,
-              fileMimeType: 'image/jpeg',
+              fileMimeType: file.type,
               fileData: fileData
             });
           }
@@ -845,12 +824,11 @@
 
         saveCurrentProfileToQuickList();
 
-        // 🔥 로딩창 닫고 성공 팝업 모달 오픈
         hideLoadingModal();
         showSuccessModal(totalCards);
 
         statusMsg.className = "text-center text-xs mt-2 font-semibold text-green-600";
-        statusMsg.innerText = `✅ All cases & images submitted successfully!`;
+        statusMsg.innerText = `✅ All cases & media submitted successfully!`;
 
         document.getElementById('testCasesContainer').innerHTML = "";
         tcCount = 0;

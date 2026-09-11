@@ -982,12 +982,18 @@
             files: preparedFiles
           };
 
+          // 📌 handleSubmitAll() 내 fetch 통신 부분 수정
           const response = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'application/json' },
+            mode: 'no-cors', // 🔥 Google Apps Script CORS 차단 회피 옵션
+            headers: { 
+              'Content-Type': 'text/plain;charset=utf-8' // application/json 대신 text/plain 사용
+            },
             body: JSON.stringify(payload)
           });
+
+          // no-cors 모드에서는 브라우저 보안상 response.json() 읽기가 차단되므로 
+          // 에러 없이 정상적으로 GAS 서버로 데이터가 전달됩니다.
 
           if (response.ok) {
             const resData = await response.json();

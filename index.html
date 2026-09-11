@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QA Proof Uploader</title>
+
+  <!-- 🔥 브라우저 강제 캐시 방지 메타 태그 (localStorage 데이터에는 영향 없음) -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="./config.js"></script>
   <style>
@@ -173,7 +179,7 @@
       <div>
         <div class="flex justify-between items-center">
           <label class="text-xs font-bold text-indigo-700">Start TC <span class="text-gray-400 font-normal">(Nomor Uji Awal)</span></label>
-          <span id="maxTcLimitBadge" class="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded">Max: 50 TCs</span>
+          <span id="maxTcLimitBadge" class="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded">Max: -- TCs</span>
         </div>
         <select id="startTcSelect" onchange="updateAllFullCaseIds(); this.blur();" class="w-full mt-0.5 p-2 border-2 border-indigo-400 rounded text-sm bg-white font-mono font-bold text-indigo-800">
         </select>
@@ -208,6 +214,9 @@
   <script>
     const GAS_WEB_APP_URL = window.ENV && window.ENV.GAS_WEB_APP_URL ? window.ENV.GAS_WEB_APP_URL : "";
     
+    // 📌 클라이언트 버전 (Code.gs의 APP_VERSION과 맞춰서 배포 시 변경)
+    const CURRENT_CLIENT_VERSION = "1.0.2";
+
     let tcCount = 0;
     const MAX_FILE_SIZE_MB = 25; // 개별 파일 최대 용량 제한 (25MB)
     const tcFilesStore = {};
@@ -284,7 +293,6 @@
       "ID_HC_910_11": 5, "ID_HC_910_12": 1, "ID_HC_910_13": 7, "ID_HC_910_14": 6, "ID_HC_910_15": 3
     };
 
-    // 📌 현재 입력된 Scenario ID의 최대 TC 개수 반환 (미등록 시 null)
     function getMaxTcForCurrentScenario() {
       const baseVal = document.getElementById('caseIdBase').value.trim().toUpperCase();
       if (!baseVal) return null;
@@ -292,6 +300,7 @@
     }
 
     window.onload = () => {
+      checkAppVersion(); // 📌 앱 로드 시 버전 검증
       initStartTcOptions();
       renderSavedProfileChips();
       
@@ -305,6 +314,28 @@
       addTestCase();
       checkInitialClearBtns();
     };
+
+    // 📌 브라우저 탭 진입 시 자동 버전 비교 로직
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        checkAppVersion();
+      }
+    });
+
+    async function checkAppVersion() {
+      if (!GAS_WEB_APP_URL) return;
+      try {
+        const res = await fetch(`${GAS_WEB_APP_URL}?action=getVersion&t=${Date.now()}`);
+        const data = await res.json();
+        
+        if (data.version && data.version !== CURRENT_CLIENT_VERSION) {
+          alert("⚠️ A new version of the app is available! The page will reload automatically.\n(새로운 버전이 업데이트되었습니다. 최신 버전을 적용하기 위해 새로고침합니다.)");
+          window.location.reload(true);
+        }
+      } catch (err) {
+        console.log("Version check skipped:", err);
+      }
+    }
 
     function getSelectedOs() {
       const selected = document.querySelector('input[name="osType"]:checked');
@@ -534,7 +565,7 @@
         return false;
       }
 
-      // 🔥 등록된 Scenario ID 유효성 검사
+      // 등록된 Scenario ID 유효성 검사
       const maxAllowed = getMaxTcForCurrentScenario();
       if (maxAllowed === null) {
         caseIdErr.innerText = `⚠️ '${val}' is NOT a registered Scenario ID. Please check and re-enter.\n(등록되지 않은 Scenario ID입니다. 다시 확인 후 입력해주세요.)`;
@@ -938,6 +969,7 @@
           }
 
           const payload = {
+            clientVersion: CURRENT_CLIENT_VERSION, // 📌 클라이언트 버전 함께 전달
             testerName: testerName,
             department: dept,
             employeeId: empId,
@@ -950,12 +982,21 @@
             files: preparedFiles
           };
 
-          await fetch(GAS_WEB_APP_URL, {
+          const response = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
-            mode: 'no-cors',
+            mode: 'cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
+
+          if (response.ok) {
+            const resData = await response.json();
+            if (resData.status === "OUTDATED_VERSION") {
+              alert("⚠️ Your browser is using an outdated version. Reloading page...\n(구버전 브라우저 세팅입니다. 새로고침 후 다시 시도해주세요.)");
+              window.location.reload(true);
+              return;
+            }
+          }
         }
 
         showLoadingModal(`Finalizing upload...`, 100);

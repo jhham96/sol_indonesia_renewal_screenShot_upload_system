@@ -152,13 +152,6 @@
           <p class="text-[10px] text-indigo-800 mt-0.5">
             (e.g. Type <span class="font-mono font-bold text-indigo-950">IDIQ30001</span> ➔ Auto formatted to <span class="font-mono font-bold text-indigo-950">ID_IQ_300_01</span>)
           </p>
-          <div class="border-t border-indigo-200 my-1"></div>
-          <p class="text-[11px] font-bold text-indigo-900 leading-tight">
-            💡 Ketik huruf & angka SAJA — Garis bawah (_) otomatis terisi!
-          </p>
-          <p class="text-[10px] text-indigo-800 mt-0.5">
-            (Contoh: Ketik <span class="font-mono font-bold text-indigo-950">IDIQ30001</span> ➔ Otomatis jadi <span class="font-mono font-bold text-indigo-950">ID_IQ_300_01</span>)
-          </p>
         </div>
 
         <div class="relative">
@@ -178,7 +171,10 @@
 
       <!-- Start TC Section -->
       <div>
-        <label class="text-xs font-bold text-indigo-700">Start TC <span class="text-gray-400 font-normal">(Nomor Uji Awal)</span></label>
+        <div class="flex justify-between items-center">
+          <label class="text-xs font-bold text-indigo-700">Start TC <span class="text-gray-400 font-normal">(Nomor Uji Awal)</span></label>
+          <span id="maxTcLimitBadge" class="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded">Max: 50 TCs</span>
+        </div>
         <select id="startTcSelect" onchange="updateAllFullCaseIds(); this.blur();" class="w-full mt-0.5 p-2 border-2 border-indigo-400 rounded text-sm bg-white font-mono font-bold text-indigo-800">
         </select>
       </div>
@@ -187,7 +183,7 @@
     <!-- Dynamic Test Cases Container -->
     <div class="space-y-4">
       <div class="border-b pb-1">
-        <h3 class="text-sm font-bold text-gray-700">Test Cases <span class="text-xs text-gray-400">(Max 20)</span></h3>
+        <h3 class="text-sm font-bold text-gray-700">Test Cases</h3>
       </div>
 
       <div id="testCasesContainer" class="space-y-4"></div>
@@ -195,7 +191,7 @@
 
     <!-- Submit 바로 위 하단 Add Case 버튼 -->
     <div class="pt-2">
-      <button type="button" id="bottomAddBtn" onclick="addTestCase()" class="w-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold py-2.5 rounded-lg border-2 border-dashed border-indigo-300 transition text-sm flex items-center justify-center gap-1">
+      <button type="button" id="bottomAddBtn" onclick="addTestCase()" class="w-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold py-2.5 rounded-lg border-2 border-dashed border-indigo-300 transition text-sm flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
         <span>➕ Add Another Case</span>
         <span class="font-normal text-xs text-indigo-500">(Tambah Case)</span>
       </button>
@@ -213,9 +209,87 @@
     const GAS_WEB_APP_URL = window.ENV && window.ENV.GAS_WEB_APP_URL ? window.ENV.GAS_WEB_APP_URL : "";
     
     let tcCount = 0;
-    const MAX_TC = 20;
     const MAX_FILE_SIZE_MB = 25; // 개별 파일 최대 용량 제한 (25MB)
     const tcFilesStore = {};
+
+    // 📌 시나리오 ID별 정해진 TC 최대 개수 맵
+    const SCENARIO_TC_MAP = {
+      "ID_ME_110_01": 2, "ID_ME_110_02": 9, "ID_ME_110_03": 11, "ID_ME_110_04": 10, "ID_ME_110_05": 6,
+      "ID_ME_110_06": 3, "ID_ME_110_07": 9, "ID_ME_110_08": 8, "ID_ME_110_09": 5, "ID_ME_110_10": 6,
+      "ID_ME_110_11": 4, "ID_ME_110_12": 3, "ID_ME_110_13": 5, "ID_ME_110_14": 2, "ID_HO_200_01": 8,
+      "ID_HO_200_02": 10, "ID_HO_200_03": 6, "ID_HO_200_04": 6, "ID_HO_200_05": 4, "ID_HO_200_06": 6,
+      "ID_HO_200_07": 6, "ID_HO_200_08": 4, "ID_HO_200_09": 7, "ID_HO_200_10": 5, "ID_ME_100_01": 5,
+      "ID_ME_100_02": 6, "ID_ME_100_03": 1, "ID_ME_100_04": 12, "ID_ME_100_05": 5, "ID_ME_100_06": 7,
+      "ID_ME_140_01": 9, "ID_ME_140_02": 9, "ID_ME_140_03": 3, "ID_ME_140_04": 6, "ID_HO_220_01": 18,
+      "ID_HO_220_02": 3, "ID_HO_220_03": 5, "ID_HO_220_04": 3, "ID_HO_220_05": 1, "NO_TI_TXN_01": 15,
+      "NO_TI_SEC_01": 24, "NO_TI_PRO_01": 15, "NO_TI_GEN_01": 27, "NO_TI_GEN_02": 6, "ID_IQ_300_01": 1,
+      "ID_IQ_300_02": 1, "ID_IQ_300_03": 1, "ID_IQ_300_04": 1, "ID_IQ_300_05": 1, "ID_IQ_300_06": 5,
+      "ID_IQ_300_07": 1, "ID_IQ_300_08": 5, "ID_IQ_300_09": 6, "ID_IQ_300_10": 2, "ID_IQ_300_11": 6,
+      "ID_IQ_300_12": 1, "ID_IQ_300_13": 5, "ID_IQ_300_14": 3, "ID_IQ_300_15": 1, "ID_IQ_300_16": 1,
+      "ID_IQ_300_17": 1, "ID_IQ_300_18": 1, "ID_IQ_300_19": 4, "ID_IQ_300_20": 7, "ID_IQ_300_21": 1,
+      "ID_IQ_300_22": 4, "ID_IQ_300_23": 1, "ID_IQ_300_24": 1, "ID_IQ_300_25": 1, "ID_IQ_300_26": 1,
+      "ID_IQ_300_27": 8, "ID_IQ_300_28": 7, "ID_IQ_300_29": 5, "ID_IQ_300_30": 1, "ID_IQ_300_31": 1,
+      "ID_IQ_300_32": 1, "ID_IQ_300_33": 1, "ID_IQ_300_34": 8, "ID_IQ_300_35": 6, "ID_IQ_300_36": 2,
+      "ID_IQ_300_37": 4, "ID_IQ_300_38": 3, "ID_IQ_300_39": 1, "ID_IQ_300_40": 1, "ID_IQ_300_41": 1,
+      "ID_IQ_300_42": 1, "ID_IQ_300_43": 1, "ID_IQ_300_44": 2, "ID_IQ_300_45": 1, "ID_TR_400_01": 6,
+      "ID_TR_400_02": 15, "ID_TR_400_03": 4, "ID_TR_400_04": 16, "ID_TR_400_05": 3, "ID_TR_400_06": 6,
+      "ID_TR_400_07": 5, "ID_TR_400_08": 5, "ID_TR_400_09": 4, "ID_TR_400_10": 3, "ID_TR_400_11": 4,
+      "ID_TR_400_12": 2, "ID_TR_400_13": 6, "ID_TR_400_14": 5, "ID_TR_400_15": 6, "ID_TR_400_16": 10,
+      "ID_TR_400_17": 4, "ID_TR_400_18": 4, "ID_TR_400_19": 6, "ID_TR_400_20": 8, "ID_TR_400_21": 7,
+      "ID_TR_400_22": 7, "ID_TR_400_23": 6, "ID_TR_400_24": 5, "ID_TR_400_25": 5, "ID_TR_400_26": 4,
+      "ID_TR_400_27": 12, "ID_TR_400_28": 3, "ID_TR_400_29": 9, "ID_TR_400_30": 7, "ID_TR_400_31": 2,
+      "ID_TR_400_32": 12, "ID_TR_400_33": 3, "ID_TR_400_34": 3, "ID_TR_400_35": 6, "ID_TR_400_36": 12,
+      "ID_TR_400_37": 4, "ID_TR_400_38": 6, "ID_TR_400_39": 5, "ID_TR_400_40": 2, "ID_TR_400_41": 5,
+      "ID_TR_400_42": 4, "ID_TR_400_43": 9, "ID_TR_400_44": 9, "ID_TR_400_45": 7, "ID_TR_400_46": 7,
+      "ID_TR_400_47": 2, "ID_TR_400_48": 6, "ID_TR_440_01": 7, "ID_TR_440_02": 6, "ID_TR_440_03": 5,
+      "ID_TR_440_04": 1, "ID_TR_440_05": 5, "ID_TR_440_06": 2, "ID_TR_440_07": 3, "ID_TR_440_08": 4,
+      "ID_TR_440_09": 4, "ID_TR_440_10": 6, "ID_TR_440_11": 4, "ID_TR_440_12": 3, "ID_TR_440_13": 11,
+      "ID_TR_450_01": 3, "ID_TR_450_02": 6, "ID_TR_450_03": 4, "ID_TR_450_04": 4, "ID_TR_450_05": 5,
+      "ID_TR_450_06": 4, "ID_TR_450_07": 4, "ID_TR_450_08": 5, "ID_TR_430_01": 8, "ID_TR_430_02": 10,
+      "ID_TR_430_03": 8, "ID_TR_430_04": 6, "ID_TR_430_05": 3, "ID_TR_430_06": 2, "ID_TR_430_07": 3,
+      "ID_TR_430_08": 3, "ID_TR_430_09": 3, "ID_TR_430_10": 3, "ID_TR_430_11": 5, "ID_TR_430_12": 2,
+      "ID_TR_430_13": 2, "ID_TR_430_14": 2, "ID_TR_430_15": 4, "ID_TR_430_16": 2, "ID_TR_430_17": 2,
+      "ID_TR_430_18": 3, "ID_TR_430_19": 4, "ID_TR_430_20": 9, "ID_TR_430_21": 6, "ID_TR_430_22": 4,
+      "ID_TR_430_23": 4, "ID_TR_430_24": 2, "ID_TR_430_25": 2, "ID_TR_430_26": 2, "ID_TR_430_27": 3,
+      "ID_TR_430_28": 2, "ID_TR_430_29": 2, "ID_TR_430_30": 2, "ID_TR_430_31": 3, "ID_TR_430_32": 3,
+      "ID_TR_430_33": 2, "ID_TR_430_34": 3, "ID_TR_430_35": 2, "ID_TR_430_36": 7, "ID_TR_430_37": 6,
+      "ID_TR_430_38": 6, "ID_TR_430_39": 6, "ID_TR_430_40": 6, "ID_TR_430_41": 7, "ID_TR_430_42": 2,
+      "ID_TR_430_43": 2, "ID_TR_430_44": 2, "ID_TR_430_45": 2, "ID_TR_430_46": 2, "ID_TR_430_47": 3,
+      "ID_TR_430_48": 2, "ID_TR_430_49": 2, "ID_TR_430_50": 2, "ID_TR_430_51": 5, "ID_TR_430_52": 5,
+      "ID_TR_430_53": 7, "ID_TR_430_54": 7, "ID_TR_430_55": 4, "ID_TR_430_56": 5, "ID_TR_430_57": 3,
+      "ID_TR_430_58": 2, "ID_TR_430_59": 3, "ID_TR_430_60": 4, "ID_TR_430_61": 4, "ID_TR_430_62": 4,
+      "ID_TR_430_63": 3, "ID_TR_430_64": 4, "ID_TR_430_65": 5, "ID_TR_420_01": 5, "ID_TR_420_02": 4,
+      "ID_TR_420_03": 17, "ID_TR_420_04": 17, "ID_TR_420_05": 17, "ID_TR_420_06": 17, "ID_TR_420_07": 17,
+      "ID_TR_420_08": 4, "ID_TR_420_09": 5, "ID_TR_420_10": 10, "ID_TR_420_11": 22, "ID_TR_420_12": 22,
+      "ID_TR_420_13": 4, "ID_TR_420_14": 3, "ID_TR_420_15": 4, "ID_TR_420_16": 10, "ID_TR_420_17": 23,
+      "ID_TR_420_18": 23, "ID_TR_420_19": 5, "ID_TR_420_20": 10, "ID_TR_420_21": 10, "ID_TR_420_22": 6,
+      "ID_TR_420_23": 5, "ID_TR_420_24": 8, "ID_TR_420_25": 5, "ID_TR_420_26": 5, "ID_TR_420_27": 7,
+      "ID_TR_420_28": 7, "ID_TR_420_29": 5, "ID_TR_420_30": 6, "ID_TR_420_31": 7, "ID_TR_420_32": 8,
+      "ID_TR_420_33": 6, "ID_PA_520_01": 2, "ID_PA_520_02": 2, "ID_PA_520_03": 1, "ID_PA_520_04": 11,
+      "ID_PA_520_05": 6, "ID_PA_520_06": 3, "ID_PA_520_07": 6, "ID_PA_520_08": 4, "ID_PA_520_09": 6,
+      "ID_PA_520_10": 4, "ID_PA_520_11": 9, "ID_PA_520_12": 9, "ID_PA_520_13": 1, "ID_PA_520_14": 11,
+      "ID_PA_520_15": 3, "ID_PA_520_16": 8, "ID_PA_520_17": 2, "ID_PA_520_18": 4, "ID_PA_520_19": 9,
+      "ID_PA_520_20": 6, "ID_PA_520_21": 3, "ID_PA_520_22": 8, "ID_PA_520_23": 5, "ID_PA_520_24": 11,
+      "ID_PA_520_25": 3, "ID_PA_520_26": 0, "ID_PR_700_01": 3, "ID_PR_700_02": 1, "ID_PR_700_03": 1,
+      "ID_PR_700_04": 8, "ID_PR_700_05": 7, "ID_PR_700_06": 5, "ID_PR_700_07": 5, "ID_PR_700_08": 7,
+      "ID_PR_700_09": 4, "ID_PR_700_10": 17, "ID_PR_700_11": 21, "ID_PR_700_12": 5, "ID_PR_700_13": 6,
+      "ID_CA_600_01": 6, "ID_CA_600_02": 1, "ID_CA_600_03": 4, "ID_CA_600_04": 10, "ID_CA_600_05": 6,
+      "ID_CA_600_06": 8, "ID_CA_600_07": 9, "ID_CA_600_08": 12, "ID_SE_800_01": 4, "ID_SE_800_02": 3,
+      "ID_SE_800_03": 3, "ID_SE_800_04": 3, "ID_SE_800_05": 5, "ID_SE_800_06": 7, "ID_SE_800_07": 7,
+      "ID_PA_510_01": 24, "ID_PA_510_02": 12, "ID_PA_510_03": 8, "ID_PA_510_04": 8, "ID_PA_510_05": 3,
+      "ID_ET_900_01": 41, "ID_ET_900_02": 1, "ID_ET_900_03": 4, "ID_ET_900_04": 5, "ID_ET_900_05": 3,
+      "ID_ET_900_06": 1, "ID_ET_900_07": 3, "ID_ET_900_08": 9, "ID_ET_900_09": 3, "ID_ET_900_10": 3,
+      "ID_HC_910_01": 4, "ID_HC_910_02": 5, "ID_HC_910_03": 4, "ID_HC_910_04": 4, "ID_HC_910_05": 3,
+      "ID_HC_910_06": 6, "ID_HC_910_07": 3, "ID_HC_910_08": 4, "ID_HC_910_09": 4, "ID_HC_910_10": 5,
+      "ID_HC_910_11": 5, "ID_HC_910_12": 1, "ID_HC_910_13": 7, "ID_HC_910_14": 6, "ID_HC_910_15": 3
+    };
+
+    // 📌 현재 입력된 Scenario ID의 최대 TC 개수 반환 (미등록 시 null)
+    function getMaxTcForCurrentScenario() {
+      const baseVal = document.getElementById('caseIdBase').value.trim().toUpperCase();
+      if (!baseVal) return null;
+      return SCENARIO_TC_MAP[baseVal] !== undefined ? SCENARIO_TC_MAP[baseVal] : null;
+    }
 
     window.onload = () => {
       initStartTcOptions();
@@ -278,13 +352,43 @@
 
     function initStartTcOptions() {
       const select = document.getElementById('startTcSelect');
+      const badge = document.getElementById('maxTcLimitBadge');
+      const currentSelected = parseInt(select.value, 10) || 1;
+      const maxTc = getMaxTcForCurrentScenario();
+
       select.innerHTML = "";
-      for (let i = 1; i <= 50; i++) {
+
+      if (maxTc === null) {
+        badge.innerText = `Max: -- TCs`;
+        const option = document.createElement('option');
+        option.value = 1;
+        option.innerText = "TC01";
+        select.appendChild(option);
+        return;
+      }
+
+      badge.innerText = `Max: ${maxTc} TCs`;
+      
+      if (maxTc === 0) {
+        const option = document.createElement('option');
+        option.value = 0;
+        option.innerText = "No TC Available (0 TC)";
+        select.appendChild(option);
+        return;
+      }
+
+      for (let i = 1; i <= maxTc; i++) {
         const option = document.createElement('option');
         const numStr = String(i).padStart(2, '0');
         option.value = i;
         option.innerText = `TC${numStr}`;
         select.appendChild(option);
+      }
+
+      if (currentSelected <= maxTc) {
+        select.value = currentSelected;
+      } else {
+        select.value = 1;
       }
     }
 
@@ -360,7 +464,6 @@
       document.getElementById('department').value = p.dept || 'E-banking';
       document.getElementById('employeeId').value = p.empId || '';
       document.getElementById('solUserId').value = p.solId || '';
-      document.getElementById('startTcSelect').value = p.startTc || 1;
       
       const osTarget = p.os || 'ANDROID';
       const osRadio = document.querySelector(`input[name="osType"][value="${osTarget}"]`);
@@ -370,6 +473,7 @@
       caseBaseInput.value = p.caseBase || '';
       
       autoFormatCaseIdBase(caseBaseInput);
+      document.getElementById('startTcSelect').value = p.startTc || 1;
       checkInitialClearBtns();
     }
 
@@ -393,6 +497,8 @@
       if (raw.length > 7) formatted += "_" + raw.substring(7, 9);
 
       input.value = formatted;
+      
+      initStartTcOptions();
       validateFormState();
       updateAllFullCaseIds();
     }
@@ -402,6 +508,7 @@
       const caseIdErr = document.getElementById('caseIdErrorMsg');
       const globalErr = document.getElementById('globalErrorMsg');
       const submitBtn = document.getElementById('submitBtn');
+      const addBtn = document.getElementById('bottomAddBtn');
       const val = input.value.trim();
 
       const baseRegex = /^[A-Z0-9]{2}_[A-Z0-9]{2}_[A-Z0-9]{3}_[A-Z0-9]{2}$/;
@@ -414,6 +521,7 @@
         caseIdErr.classList.remove('hidden');
         input.className = "w-full p-2 pr-7 border-2 border-red-500 rounded text-sm uppercase font-mono tracking-wide bg-white";
         submitBtn.disabled = true;
+        if (addBtn) addBtn.disabled = true;
         return false;
       }
 
@@ -422,10 +530,23 @@
         caseIdErr.classList.remove('hidden');
         input.className = "w-full p-2 pr-7 border-2 border-red-500 rounded text-sm uppercase font-mono tracking-wide bg-white";
         submitBtn.disabled = true;
+        if (addBtn) addBtn.disabled = true;
+        return false;
+      }
+
+      // 🔥 등록된 Scenario ID 유효성 검사
+      const maxAllowed = getMaxTcForCurrentScenario();
+      if (maxAllowed === null) {
+        caseIdErr.innerText = `⚠️ '${val}' is NOT a registered Scenario ID. Please check and re-enter.\n(등록되지 않은 Scenario ID입니다. 다시 확인 후 입력해주세요.)`;
+        caseIdErr.classList.remove('hidden');
+        input.className = "w-full p-2 pr-7 border-2 border-red-500 rounded text-sm uppercase font-mono tracking-wide bg-white";
+        submitBtn.disabled = true;
+        if (addBtn) addBtn.disabled = true;
         return false;
       }
 
       input.className = "w-full p-2 pr-7 border-2 border-green-500 rounded text-sm uppercase font-mono tracking-wide bg-white";
+      if (addBtn) addBtn.disabled = false;
 
       const cards = document.querySelectorAll('.tc-card');
 
@@ -460,11 +581,25 @@
     }
 
     function addTestCase() {
+      const baseVal = document.getElementById('caseIdBase').value.trim().toUpperCase();
+      const maxAllowed = getMaxTcForCurrentScenario();
+
+      if (baseVal && maxAllowed === null) {
+        alert(`⚠️ '${baseVal}' is not a registered Scenario ID. Please enter a valid Scenario ID.\n(등록되지 않은 Scenario ID입니다. 올바른 ID를 입력해 주세요.)`);
+        return;
+      }
+
       const container = document.getElementById('testCasesContainer');
       const currentCards = container.getElementsByClassName('tc-card');
-      
-      if (currentCards.length >= MAX_TC) {
-        alert(`Maximum ${MAX_TC} cases allowed.\n(Maksimal ${MAX_TC} case saja.)`);
+      const limit = maxAllowed !== null ? maxAllowed : 50;
+
+      if (limit === 0) {
+        alert("⚠️ This scenario has 0 test cases.\n(해당 시나리오는 테스트케이스가 0개입니다.)");
+        return;
+      }
+
+      if (currentCards.length >= limit) {
+        alert(`⚠️ Maximum ${limit} TC(s) allowed for Scenario '${baseVal}'.\n(해당 시나리오는 최대 ${limit}개의 TC만 생성할 수 있습니다.)`);
         return;
       }
 
@@ -474,8 +609,13 @@
 
       const startTcNum = parseInt(document.getElementById('startTcSelect').value, 10) || 1;
       const tcIndex = startTcNum + currentCards.length;
+
+      if (tcIndex > limit) {
+        alert(`⚠️ TC index (TC${String(tcIndex).padStart(2, '0')}) exceeds the max limit of ${limit} for this scenario.`);
+        return;
+      }
+
       const tcSuffix = `TC${String(tcIndex).padStart(2, '0')}`;
-      const baseVal = document.getElementById('caseIdBase').value.trim().toUpperCase();
       const fullCaseId = baseVal ? `${baseVal}_${tcSuffix}` : tcSuffix;
 
       const cardHtml = `
@@ -588,7 +728,6 @@
       const newFiles = Array.from(e.target.files);
       if (newFiles.length === 0) return;
 
-      // 파일 용량 제한 체크
       const oversizedFiles = newFiles.filter(f => f.size > MAX_FILE_SIZE_MB * 1024 * 1024);
       if (oversizedFiles.length > 0) {
         alert(`⚠️ Some files exceed the ${MAX_FILE_SIZE_MB}MB limit.\n(일부 파일 용량이 ${MAX_FILE_SIZE_MB}MB를 초과하여 제외됩니다.)`);
